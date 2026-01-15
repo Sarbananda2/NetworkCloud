@@ -1,16 +1,68 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useAuth } from "@/hooks/use-auth";
+import { Loader2 } from "lucide-react";
 import NotFound from "@/pages/not-found";
 
+// Pages
+import LoginPage from "@/pages/Login";
+import DeviceList from "@/pages/DeviceList";
+import DeviceDetail from "@/pages/DeviceDetail";
+
+function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Redirect to="/login" />;
+  }
+
+  return <Component />;
+}
+
 function Router() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  // Handle redirect from root
+  if (!isLoading && isAuthenticated && window.location.pathname === "/") {
+    return <Redirect to="/devices" />;
+  }
+
   return (
     <Switch>
-      {/* Add pages below */}
-      {/* <Route path="/" component={Home}/> */}
-      {/* Fallback to 404 */}
+      <Route path="/login">
+        {isAuthenticated ? <Redirect to="/devices" /> : <LoginPage />}
+      </Route>
+      
+      <Route path="/devices">
+        <ProtectedRoute component={DeviceList} />
+      </Route>
+      
+      <Route path="/devices/:id">
+        <ProtectedRoute component={DeviceDetail} />
+      </Route>
+
+      <Route path="/">
+        {/* If we are here, we are either loading or not authenticated (and redirect logic above handles auth) */}
+        {isLoading ? (
+          <div className="min-h-screen flex items-center justify-center bg-background">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <Redirect to="/login" />
+        )}
+      </Route>
+
       <Route component={NotFound} />
     </Switch>
   );

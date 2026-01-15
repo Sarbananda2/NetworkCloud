@@ -1,18 +1,82 @@
-import { sql } from "drizzle-orm";
-import { pgTable, text, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, boolean, varchar, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { relations } from "drizzle-orm";
+import { users } from "./models/auth";
 
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+// Export users from auth model so it's available here
+export { users } from "./models/auth";
+
+// === TABLE DEFINITIONS ===
+
+export const devices = pgTable("devices", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id), // Link to auth users
+  name: text("name").notNull(),
+  status: text("status").notNull().default("offline"), // online, offline, away
+  lastSeenAt: timestamp("last_seen_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
+export const deviceNetworkStates = pgTable("device_network_states", {
+  id: serial("id").primaryKey(),
+  deviceId: integer("device_id").notNull().references(() => devices.id),
+  ipAddress: text("ip_address"),
+  isLastKnown: boolean("is_last_known").default(false),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
+// === RELATIONS ===
+
+export const devicesRelations = relations(devices, ({ one, many }) => ({
+  user: one(users, {
+    fields: [devices.userId],
+    references: [users.id],
+  }),
+  networkState: one(deviceNetworkStates, {
+    fields: [devices.id],
+    references: [deviceNetworkStates.deviceId],
+  }),
+}));
+
+export const deviceNetworkStatesRelations = relations(deviceNetworkStates, ({ one }) => ({
+  device: one(devices, {
+    fields: [deviceNetworkStates.deviceId],
+    references: [devices.id],
+  }),
+}));
+
+// === BASE SCHEMAS ===
+
+export const insertDeviceSchema = createInsertSchema(devices).omit({ 
+  id: true, 
+  createdAt: true, 
+  lastSeenAt: true 
+});
+
+export const insertNetworkStateSchema = createInsertSchema(deviceNetworkStates).omit({ 
+  id: true, 
+  updatedAt: true 
+});
+
+// === EXPLICIT API CONTRACT TYPES ===
+
+// Base types
+export type Device = typeof devices.$inferSelect;
+export type NetworkState = typeof deviceNetworkStates.$inferSelect;
+
+// Response types
+export type DeviceResponse = Device;
+export type DeviceListResponse = Device[];
+export type NetworkStateResponse = NetworkState | null;
+
+// Combined detail response (optional, but useful for detail view)
+export interface DeviceDetailResponse extends Device {
+  networkState?: NetworkState;
+}
+
+// Session type
+export interface SessionResponse {
+  user?: typeof users.$inferSelect;
+  authenticated: boolean;
+}
