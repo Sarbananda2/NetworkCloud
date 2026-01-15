@@ -107,5 +107,32 @@ export async function registerRoutes(
     }
   });
 
+  // Account deletion endpoint
+  app.delete("/api/account", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Delete all user data
+      await storage.deleteAccount(userId);
+      
+      // Logout the user
+      req.logout((err: any) => {
+        if (err) {
+          console.error("Error during logout after account deletion:", err);
+        }
+        req.session.destroy((sessionErr: any) => {
+          if (sessionErr) {
+            console.error("Error destroying session:", sessionErr);
+          }
+          res.clearCookie("connect.sid");
+          res.status(204).send();
+        });
+      });
+    } catch (error) {
+      console.error("Error deleting account:", error);
+      res.status(500).json({ message: "Failed to delete account" });
+    }
+  });
+
   return httpServer;
 }

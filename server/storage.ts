@@ -1,6 +1,6 @@
 import { db } from "./db";
-import { devices, deviceNetworkStates, type Device, type NetworkState } from "@shared/schema";
-import { eq, desc } from "drizzle-orm";
+import { devices, deviceNetworkStates, users, type Device, type NetworkState } from "@shared/schema";
+import { eq, desc, inArray } from "drizzle-orm";
 
 export interface IStorage {
   // Read-only operations for the frontend
@@ -11,6 +11,9 @@ export interface IStorage {
   // Internal operations for seeding/agent updates (not exposed via write API)
   createDevice(device: Omit<Device, "id" | "createdAt" | "lastSeenAt"> & { userId: string }): Promise<Device>;
   updateNetworkState(deviceId: number, ipAddress: string, isLastKnown: boolean): Promise<NetworkState>;
+  
+  // Account management
+  deleteAccount(userId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -58,6 +61,27 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return state;
+  }
+
+  async deleteAccount(userId: string): Promise<void> {
+    // Get all device IDs for this user
+    const userDevices = await db.select({ id: devices.id })
+      .from(devices)
+      .where(eq(devices.userId, userId));
+    
+    const deviceIds = userDevices.map(d => d.id);
+    
+    // Delete network states for all user's devices
+    if (deviceIds.length > 0) {
+      await db.delete(deviceNetworkStates)
+        .where(inArray(deviceNetworkStates.deviceId, deviceIds));
+    }
+    
+    // Delete all user's devices
+    await db.delete(devices).where(eq(devices.userId, userId));
+    
+    // Delete user record
+    await db.delete(users).where(eq(users.id, userId));
   }
 }
 
