@@ -47,6 +47,7 @@ Defined in `shared/routes.ts` using Zod schemas:
 - `GET /api/devices` - List user's devices
 - `GET /api/devices/:id` - Single device details
 - `GET /api/devices/:id/network-state` - Device network information
+- `DELETE /api/account` - Permanently delete user account and all associated data
 
 ### Key Constraints
 The web app must never:
