@@ -2,6 +2,7 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { LogOut, User, Settings, Trash2 } from "lucide-react";
+import logoUrl from "@/assets/logo.png";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -62,10 +63,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-8">
             <Link href="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold font-display shadow-lg shadow-primary/20">
-                N
-              </div>
-              <span className="font-display font-bold text-lg tracking-tight">NetworkCloud</span>
+              <img src={logoUrl} alt="NetworkCloud" className="h-8 w-auto object-contain" data-testid="img-logo-header" />
             </Link>
 
             <nav className="hidden md:flex items-center gap-6">

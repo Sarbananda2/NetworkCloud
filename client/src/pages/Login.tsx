@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { motion } from "framer-motion";
-import { Shield, Mail, Lock } from "lucide-react";
+import { Mail, Lock, Shield } from "lucide-react";
 import { SiGoogle, SiGithub } from "react-icons/si";
+import logoUrl from "@/assets/logo.png";
 
 export default function LoginPage() {
   const handleLogin = () => {
@@ -24,9 +25,12 @@ export default function LoginPage() {
           <div className="relative z-10 space-y-8">
             {/* Logo & Branding */}
             <div className="text-center space-y-4">
-              <div className="w-14 h-14 bg-primary rounded-xl mx-auto flex items-center justify-center shadow-lg shadow-primary/20">
-                <span className="text-2xl font-bold text-primary-foreground font-display">N</span>
-              </div>
+              <img 
+                src={logoUrl} 
+                alt="NetworkCloud" 
+                className="h-16 mx-auto object-contain"
+                data-testid="img-logo-login"
+              />
               <div>
                 <h1 className="text-2xl font-bold font-display text-foreground">Welcome to NetworkCloud</h1>
                 <p className="text-muted-foreground mt-1">Sign in to access your dashboard</p>
