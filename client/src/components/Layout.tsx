@@ -63,7 +63,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-8">
             <Link href="/" className="flex items-center gap-2">
-              <img src={logoUrl} alt="NetworkCloud" className="h-8 w-auto object-contain" data-testid="img-logo-header" />
+              <img src={logoUrl} alt="NetworkCloud" className="h-8 w-8 object-contain" data-testid="img-logo-header" />
             </Link>
 
             <nav className="hidden md:flex items-center gap-6">
