@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { useDevices } from "@/hooks/use-devices";
 import { Layout } from "@/components/Layout";
@@ -7,11 +8,14 @@ import { formatDistanceToNow } from "date-fns";
 import { motion } from "framer-motion";
 import { Laptop, Smartphone, Server, Search, WifiOff, Wifi, Monitor } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DeviceList() {
   const { data: devices, isLoading, error } = useDevices();
+
+  useEffect(() => {
+    document.title = "Dashboard | NetworkCloud";
+  }, []);
   const [search, setSearch] = useState("");
 
   const filteredDevices = devices?.filter(d => 

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { motion } from "framer-motion";
@@ -10,6 +11,10 @@ export default function LoginPage() {
   const [location] = useLocation();
   const searchParams = new URLSearchParams(window.location.search);
   const error = searchParams.get("error");
+
+  useEffect(() => {
+    document.title = "Login | NetworkCloud";
+  }, []);
   
   const handleLogin = () => {
     window.location.href = "/api/login";

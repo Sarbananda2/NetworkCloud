@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useRoute } from "wouter";
 import { useDevice, useDeviceNetworkState } from "@/hooks/use-devices";
 import { Layout } from "@/components/Layout";
@@ -15,6 +16,14 @@ export default function DeviceDetail() {
   
   const { data: device, isLoading: loadingDevice, error: deviceError } = useDevice(id);
   const { data: networkState, isLoading: loadingNetwork } = useDeviceNetworkState(id);
+
+  useEffect(() => {
+    if (device) {
+      document.title = `${device.name} | NetworkCloud`;
+    } else {
+      document.title = "Device Details | NetworkCloud";
+    }
+  }, [device]);
 
   if (deviceError) {
     return (
