@@ -103,10 +103,6 @@ export async function setupAuth(app: Express) {
   passport.serializeUser((user: Express.User, cb) => cb(null, user));
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));
 
-  app.get("/api/login-start", (req, res) => {
-    htmlRedirect(res, "/api/login", "NetworkCloud");
-  });
-
   app.get("/api/login", (req, res, next) => {
     ensureStrategy(req.hostname);
     passport.authenticate(`replitauth:${req.hostname}`, {
@@ -137,11 +133,12 @@ export async function setupAuth(app: Express) {
 
   app.get("/api/logout", (req, res) => {
     req.logout(() => {
-      const endSessionUrl = client.buildEndSessionUrl(config, {
-        client_id: process.env.REPL_ID!,
-        post_logout_redirect_uri: `${req.protocol}://${req.hostname}`,
-      }).href;
-      htmlRedirect(res, endSessionUrl, "NetworkCloud");
+      res.redirect(
+        client.buildEndSessionUrl(config, {
+          client_id: process.env.REPL_ID!,
+          post_logout_redirect_uri: `${req.protocol}://${req.hostname}`,
+        }).href
+      );
     });
   });
 }

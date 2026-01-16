@@ -12,7 +12,7 @@ export default function LoginPage() {
   const error = searchParams.get("error");
   
   const handleLogin = () => {
-    window.location.href = "/api/login-start";
+    window.location.href = "/api/login";
   };
 
   const getErrorMessage = () => {
