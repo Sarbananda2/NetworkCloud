@@ -3,10 +3,11 @@ import { Strategy, type VerifyFunction } from "openid-client/passport";
 
 import passport from "passport";
 import session from "express-session";
-import type { Express, RequestHandler } from "express";
+import type { Express, RequestHandler, Request, Response, NextFunction } from "express";
 import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { authStorage } from "./storage";
+import { htmlRedirect } from "../../utils/htmlRedirect";
 
 const getOidcConfig = memoize(
   async () => {
@@ -102,6 +103,10 @@ export async function setupAuth(app: Express) {
   passport.serializeUser((user: Express.User, cb) => cb(null, user));
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));
 
+  app.get("/api/login-start", (req, res) => {
+    htmlRedirect(res, "/api/login", "NetworkCloud");
+  });
+
   app.get("/api/login", (req, res, next) => {
     ensureStrategy(req.hostname);
     passport.authenticate(`replitauth:${req.hostname}`, {
@@ -113,24 +118,30 @@ export async function setupAuth(app: Express) {
   app.get("/api/callback", (req, res, next) => {
     // Handle consent denial gracefully - redirect to login with message
     if (req.query.error === "access_denied") {
-      return res.redirect("/login?error=access_denied");
+      return htmlRedirect(res, "/login?error=access_denied", "NetworkCloud");
     }
     
     ensureStrategy(req.hostname);
-    passport.authenticate(`replitauth:${req.hostname}`, {
-      successReturnToOrRedirect: "/",
-      failureRedirect: "/login?error=auth_failed",
+    passport.authenticate(`replitauth:${req.hostname}`, (err: Error | null, user: Express.User | false) => {
+      if (err || !user) {
+        return htmlRedirect(res, "/login?error=auth_failed", "NetworkCloud");
+      }
+      req.logIn(user, (loginErr) => {
+        if (loginErr) {
+          return htmlRedirect(res, "/login?error=auth_failed", "NetworkCloud");
+        }
+        return htmlRedirect(res, "/", "NetworkCloud");
+      });
     })(req, res, next);
   });
 
   app.get("/api/logout", (req, res) => {
     req.logout(() => {
-      res.redirect(
-        client.buildEndSessionUrl(config, {
-          client_id: process.env.REPL_ID!,
-          post_logout_redirect_uri: `${req.protocol}://${req.hostname}`,
-        }).href
-      );
+      const endSessionUrl = client.buildEndSessionUrl(config, {
+        client_id: process.env.REPL_ID!,
+        post_logout_redirect_uri: `${req.protocol}://${req.hostname}`,
+      }).href;
+      htmlRedirect(res, endSessionUrl, "NetworkCloud");
     });
   });
 }
