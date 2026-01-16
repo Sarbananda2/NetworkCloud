@@ -5,7 +5,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { Card } from "@/components/ui/card";
 import { formatDistanceToNow } from "date-fns";
 import { motion } from "framer-motion";
-import { Laptop, Smartphone, Server, Search, WifiOff } from "lucide-react";
+import { Laptop, Smartphone, Server, Search, WifiOff, Wifi, Monitor } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -75,6 +75,7 @@ export default function DeviceList() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9 bg-white border-border/60 focus:bg-white transition-all shadow-sm"
+              data-testid="input-search-devices"
             />
           </div>
         </div>
@@ -97,8 +98,49 @@ export default function DeviceList() {
           </div>
         )}
 
-        {/* Content State */}
-        {!isLoading && filteredDevices && (
+        {/* Empty State - No devices at all */}
+        {!isLoading && devices && devices.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="flex flex-col items-center justify-center py-16 px-4"
+            data-testid="empty-state-no-devices"
+          >
+            <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mb-6">
+              <Monitor className="w-10 h-10 text-primary" />
+            </div>
+            <h2 className="text-2xl font-display font-bold text-foreground mb-3 text-center" data-testid="text-empty-state-heading">
+              No devices yet
+            </h2>
+            <p className="text-muted-foreground text-center max-w-md mb-6" data-testid="text-empty-state-description">
+              Your dashboard is ready and waiting. Devices will appear here automatically once your local NetworkCloud agent registers them on your network.
+            </p>
+            <div className="bg-secondary/50 rounded-xl p-6 max-w-md w-full" data-testid="container-getting-started">
+              <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2" data-testid="text-getting-started-heading">
+                <Wifi className="w-4 h-4 text-primary" />
+                Getting Started
+              </h3>
+              <ul className="space-y-2 text-sm text-muted-foreground" data-testid="list-getting-started-steps">
+                <li className="flex items-start gap-2" data-testid="row-getting-started-1">
+                  <span className="w-5 h-5 bg-primary/10 rounded-full flex items-center justify-center text-xs font-bold text-primary shrink-0 mt-0.5">1</span>
+                  <span data-testid="text-getting-started-step-1">Install the NetworkCloud agent on your local machine</span>
+                </li>
+                <li className="flex items-start gap-2" data-testid="row-getting-started-2">
+                  <span className="w-5 h-5 bg-primary/10 rounded-full flex items-center justify-center text-xs font-bold text-primary shrink-0 mt-0.5">2</span>
+                  <span data-testid="text-getting-started-step-2">Configure the agent with your network settings</span>
+                </li>
+                <li className="flex items-start gap-2" data-testid="row-getting-started-3">
+                  <span className="w-5 h-5 bg-primary/10 rounded-full flex items-center justify-center text-xs font-bold text-primary shrink-0 mt-0.5">3</span>
+                  <span data-testid="text-getting-started-step-3">Devices will appear here as they're detected</span>
+                </li>
+              </ul>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Content State - Has devices */}
+        {!isLoading && filteredDevices && devices && devices.length > 0 && (
           <motion.div 
             variants={container}
             initial="hidden"

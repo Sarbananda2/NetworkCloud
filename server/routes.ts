@@ -18,36 +18,7 @@ export async function registerRoutes(
   app.get(api.devices.list.path, isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub; // From Replit Auth
-      let devices = await storage.getDevices(userId);
-
-      // AUTO-SEED FOR DEMO: If user has no devices, create some!
-      if (devices.length === 0) {
-        console.log(`Auto-seeding demo data for user ${userId}`);
-        const d1 = await storage.createDevice({
-          userId,
-          name: "Living Room Hub",
-          status: "online"
-        });
-        await storage.updateNetworkState(d1.id, "192.168.1.105", false);
-
-        const d2 = await storage.createDevice({
-          userId,
-          name: "Kitchen Display",
-          status: "offline"
-        });
-        await storage.updateNetworkState(d2.id, "192.168.1.112", true); // last known
-
-        const d3 = await storage.createDevice({
-          userId,
-          name: "Garage Sensor",
-          status: "away"
-        });
-        await storage.updateNetworkState(d3.id, "192.168.1.98", true); // last known - away device
-        
-        // Refresh list
-        devices = await storage.getDevices(userId);
-      }
-
+      const devices = await storage.getDevices(userId);
       res.json(devices);
     } catch (error) {
       console.error("Error fetching devices:", error);
