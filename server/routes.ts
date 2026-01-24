@@ -1,11 +1,27 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import cors from "cors";
+import crypto from "crypto";
 import { storage } from "./storage";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
-import { api } from "@shared/routes";
+import { api, deviceFlowSchemas } from "@shared/routes";
 import { isAgentAuthenticated, type AgentRequest } from "./middleware/agentAuth";
-import { generateToken } from "./utils/agentToken";
+import { generateToken, hashToken } from "./utils/agentToken";
+
+// Helper functions for device authorization flow
+function generateDeviceCode(): string {
+  return crypto.randomBytes(32).toString("base64url");
+}
+
+function generateUserCode(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code = "";
+  for (let i = 0; i < 8; i++) {
+    if (i === 4) code += "-";
+    code += chars.charAt(crypto.randomInt(chars.length));
+  }
+  return code;
+}
 
 export async function registerRoutes(
   httpServer: Server,
@@ -502,6 +518,238 @@ export async function registerRoutes(
       res.status(500).json({ message: "Internal Server Error" });
     }
   });
+
+  // === DEVICE AUTHORIZATION FLOW (OAuth Device Flow) ===
+  
+  // Enable CORS for device authorization endpoints (called by external agents)
+  const deviceCorsOptions = {
+    origin: "*",
+    methods: ["POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type"],
+  };
+  app.use("/api/device", cors(deviceCorsOptions));
+  
+  // POST /api/device/authorize - Agent requests a device code
+  app.post("/api/device/authorize", async (req, res) => {
+    try {
+      const parseResult = deviceFlowSchemas.authorize.body.safeParse(req.body);
+      if (!parseResult.success) {
+        return res.status(400).json({ error: "invalid_request", message: "Validation error" });
+      }
+      
+      const { hostname, macAddress } = parseResult.data;
+      
+      // Generate codes
+      const deviceCode = generateDeviceCode();
+      const deviceCodeHash = hashToken(deviceCode);
+      const userCode = generateUserCode();
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+      
+      // Store authorization request
+      await storage.createDeviceAuthorization(
+        deviceCodeHash,
+        userCode,
+        hostname || null,
+        macAddress || null,
+        expiresAt
+      );
+      
+      // Build verification URI
+      const protocol = req.headers["x-forwarded-proto"] || req.protocol || "https";
+      const host = req.headers["x-forwarded-host"] || req.headers.host || req.hostname;
+      const verificationUri = `${protocol}://${host}/link`;
+      
+      res.json({
+        device_code: deviceCode,
+        user_code: userCode,
+        verification_uri: verificationUri,
+        expires_in: 900,
+        interval: 5,
+      });
+    } catch (error: any) {
+      // Handle unique constraint violation (retry with new codes)
+      if (error.code === "23505") {
+        return res.status(500).json({ error: "code_generation_failed", message: "Please try again" });
+      }
+      console.error("Error creating device authorization:", error);
+      res.status(500).json({ error: "server_error" });
+    }
+  });
+  
+  // POST /api/device/token - Agent polls for token
+  app.post("/api/device/token", async (req, res) => {
+    try {
+      const parseResult = deviceFlowSchemas.token.body.safeParse(req.body);
+      if (!parseResult.success) {
+        return res.status(400).json({ error: "invalid_request", message: "device_code is required" });
+      }
+      
+      const { device_code } = parseResult.data;
+      const deviceCodeHash = hashToken(device_code);
+      const auth = await storage.getDeviceAuthorizationByDeviceCodeHash(deviceCodeHash);
+      
+      if (!auth) {
+        return res.status(400).json({ error: "invalid_grant", message: "Device code not found" });
+      }
+      
+      // Check expiration
+      if (new Date() > auth.expiresAt) {
+        await storage.updateDeviceAuthorizationStatus(auth.id, "expired");
+        return res.status(400).json({ error: "expired_token", message: "Device code has expired" });
+      }
+      
+      // Check status
+      switch (auth.status) {
+        case "pending":
+          return res.status(400).json({ error: "authorization_pending" });
+        
+        case "denied":
+          return res.status(400).json({ error: "access_denied" });
+        
+        case "exchanged":
+          return res.status(400).json({ error: "invalid_grant", message: "Code already used" });
+        
+        case "approved":
+          // Create agent token for the user
+          const userId = auth.userId!;
+          const tokenName = auth.hostname ? `Agent: ${auth.hostname}` : "Device Flow Agent";
+          const { token, tokenHash, tokenPrefix } = generateToken();
+          
+          const agentToken = await storage.createAgentToken(userId, tokenName, tokenHash, tokenPrefix);
+          
+          // Mark authorization as exchanged
+          await storage.updateDeviceAuthorizationStatus(auth.id, "exchanged");
+          
+          // Generate a UUID for this agent
+          const agentUuid = crypto.randomUUID();
+          
+          // Pre-populate agent info so heartbeat just approves
+          await storage.updateAgentInfo(
+            agentToken.id,
+            agentUuid,
+            auth.macAddress || "",
+            auth.hostname || "",
+            ""
+          );
+          
+          // Auto-approve since user explicitly approved via device flow
+          await storage.approveAgentToken(agentToken.id, userId);
+          
+          return res.json({
+            access_token: token,
+            token_type: "Bearer",
+            agent_uuid: agentUuid,
+          });
+        
+        default:
+          return res.status(400).json({ error: "invalid_grant" });
+      }
+    } catch (error) {
+      console.error("Error polling device token:", error);
+      res.status(500).json({ error: "server_error" });
+    }
+  });
+  
+  // POST /api/device/verify - Web UI validates user code (requires auth)
+  app.post("/api/device/verify", isAuthenticated, async (req: any, res) => {
+    try {
+      const parseResult = deviceFlowSchemas.verify.body.safeParse(req.body);
+      if (!parseResult.success) {
+        return res.status(400).json({ error: "invalid_code", message: "User code is required" });
+      }
+      
+      const { user_code } = parseResult.data;
+      
+      // Normalize code (uppercase, add dash if missing)
+      let normalizedCode = user_code.toUpperCase().replace(/[^A-Z0-9]/g, "");
+      if (normalizedCode.length === 8) {
+        normalizedCode = normalizedCode.slice(0, 4) + "-" + normalizedCode.slice(4);
+      }
+      
+      const auth = await storage.getDeviceAuthorizationByUserCode(normalizedCode);
+      
+      if (!auth) {
+        return res.status(404).json({ error: "invalid_code", message: "Code not found" });
+      }
+      
+      // Check expiration
+      if (new Date() > auth.expiresAt) {
+        return res.status(400).json({ error: "expired_code", message: "Code has expired" });
+      }
+      
+      // Check if already processed
+      if (auth.status !== "pending") {
+        return res.status(400).json({ error: "code_used", message: "Code has already been used" });
+      }
+      
+      res.json({
+        hostname: auth.hostname,
+        macAddress: auth.macAddress,
+        createdAt: auth.createdAt,
+      });
+    } catch (error) {
+      console.error("Error verifying device code:", error);
+      res.status(500).json({ error: "server_error" });
+    }
+  });
+  
+  // POST /api/device/approve - Web UI approves/denies device (requires auth)
+  app.post("/api/device/approve", isAuthenticated, async (req: any, res) => {
+    try {
+      const parseResult = deviceFlowSchemas.approve.body.safeParse(req.body);
+      if (!parseResult.success) {
+        return res.status(400).json({ error: "invalid_request", message: "Validation error", errors: parseResult.error.flatten().fieldErrors });
+      }
+      
+      const { user_code, approved } = parseResult.data;
+      const userId = req.user.claims.sub;
+      
+      // Normalize code
+      let normalizedCode = user_code.toUpperCase().replace(/[^A-Z0-9]/g, "");
+      if (normalizedCode.length === 8) {
+        normalizedCode = normalizedCode.slice(0, 4) + "-" + normalizedCode.slice(4);
+      }
+      
+      const auth = await storage.getDeviceAuthorizationByUserCode(normalizedCode);
+      
+      if (!auth) {
+        return res.status(404).json({ error: "invalid_code", message: "Code not found" });
+      }
+      
+      // Check expiration
+      if (new Date() > auth.expiresAt) {
+        return res.status(400).json({ error: "expired_code", message: "Code has expired" });
+      }
+      
+      // Check if already processed
+      if (auth.status !== "pending") {
+        return res.status(400).json({ error: "code_used", message: "Code has already been processed" });
+      }
+      
+      const newStatus = approved ? "approved" : "denied";
+      await storage.updateDeviceAuthorizationStatus(auth.id, newStatus, approved ? userId : undefined);
+      
+      res.json({
+        success: true,
+        message: approved ? "Device linked successfully" : "Device linking denied",
+      });
+    } catch (error) {
+      console.error("Error approving device:", error);
+      res.status(500).json({ error: "server_error" });
+    }
+  });
+  
+  // Cleanup expired authorizations periodically (simple in-memory interval)
+  setInterval(async () => {
+    try {
+      const cleaned = await storage.cleanupExpiredAuthorizations();
+      if (cleaned > 0) {
+        console.log(`Cleaned up ${cleaned} expired device authorizations`);
+      }
+    } catch (error) {
+      console.error("Error cleaning up authorizations:", error);
+    }
+  }, 5 * 60 * 1000); // Every 5 minutes
 
   return httpServer;
 }

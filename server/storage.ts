@@ -1,6 +1,6 @@
 import { db } from "./db";
-import { devices, deviceNetworkStates, users, agentTokens, type Device, type NetworkState, type AgentToken } from "@shared/schema";
-import { eq, desc, inArray, isNull, and } from "drizzle-orm";
+import { devices, deviceNetworkStates, users, agentTokens, deviceAuthorizations, type Device, type NetworkState, type AgentToken, type DeviceAuthorization } from "@shared/schema";
+import { eq, desc, inArray, isNull, and, lt } from "drizzle-orm";
 
 export interface IStorage {
   // Read-only operations for the frontend
@@ -32,6 +32,13 @@ export interface IStorage {
   
   // Account management
   deleteAccount(userId: string): Promise<void>;
+  
+  // Device authorization operations (OAuth Device Flow)
+  createDeviceAuthorization(deviceCodeHash: string, userCode: string, hostname: string | null, macAddress: string | null, expiresAt: Date): Promise<DeviceAuthorization>;
+  getDeviceAuthorizationByDeviceCodeHash(deviceCodeHash: string): Promise<DeviceAuthorization | undefined>;
+  getDeviceAuthorizationByUserCode(userCode: string): Promise<DeviceAuthorization | undefined>;
+  updateDeviceAuthorizationStatus(id: number, status: string, userId?: string): Promise<DeviceAuthorization | undefined>;
+  cleanupExpiredAuthorizations(): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -265,7 +272,70 @@ export class DatabaseStorage implements IStorage {
     
     await db.delete(devices).where(eq(devices.userId, userId));
     await db.delete(agentTokens).where(eq(agentTokens.userId, userId));
+    await db.delete(deviceAuthorizations).where(eq(deviceAuthorizations.userId, userId));
     await db.delete(users).where(eq(users.id, userId));
+  }
+
+  // Device authorization operations (OAuth Device Flow)
+  async createDeviceAuthorization(
+    deviceCodeHash: string, 
+    userCode: string, 
+    hostname: string | null, 
+    macAddress: string | null, 
+    expiresAt: Date
+  ): Promise<DeviceAuthorization> {
+    const [auth] = await db.insert(deviceAuthorizations)
+      .values({
+        deviceCodeHash,
+        userCode,
+        hostname,
+        macAddress,
+        expiresAt,
+        status: "pending",
+      })
+      .returning();
+    return auth;
+  }
+
+  async getDeviceAuthorizationByDeviceCodeHash(deviceCodeHash: string): Promise<DeviceAuthorization | undefined> {
+    const [auth] = await db.select()
+      .from(deviceAuthorizations)
+      .where(eq(deviceAuthorizations.deviceCodeHash, deviceCodeHash));
+    return auth;
+  }
+
+  async getDeviceAuthorizationByUserCode(userCode: string): Promise<DeviceAuthorization | undefined> {
+    const [auth] = await db.select()
+      .from(deviceAuthorizations)
+      .where(eq(deviceAuthorizations.userCode, userCode));
+    return auth;
+  }
+
+  async updateDeviceAuthorizationStatus(
+    id: number, 
+    status: string, 
+    userId?: string
+  ): Promise<DeviceAuthorization | undefined> {
+    const updates: any = { status };
+    if (userId) {
+      updates.userId = userId;
+    }
+    const [updated] = await db.update(deviceAuthorizations)
+      .set(updates)
+      .where(eq(deviceAuthorizations.id, id))
+      .returning();
+    return updated;
+  }
+
+  async cleanupExpiredAuthorizations(): Promise<number> {
+    const now = new Date();
+    const result = await db.delete(deviceAuthorizations)
+      .where(and(
+        lt(deviceAuthorizations.expiresAt, now),
+        eq(deviceAuthorizations.status, "pending")
+      ))
+      .returning();
+    return result.length;
   }
 }
 

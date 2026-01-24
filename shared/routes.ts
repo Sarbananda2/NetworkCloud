@@ -246,6 +246,34 @@ export function buildUrl(path: string, params?: Record<string, string | number>)
 }
 
 // ============================================
+// DEVICE FLOW SCHEMAS (OAuth Device Authorization)
+// ============================================
+export const deviceFlowSchemas = {
+  authorize: {
+    body: z.object({
+      hostname: z.string().max(255).optional(),
+      macAddress: z.string().max(17).optional(),
+    }),
+  },
+  token: {
+    body: z.object({
+      device_code: z.string().min(1),
+    }),
+  },
+  verify: {
+    body: z.object({
+      user_code: z.string().min(1).max(16),
+    }),
+  },
+  approve: {
+    body: z.object({
+      user_code: z.string().min(1).max(16),
+      approved: z.boolean(),
+    }),
+  },
+};
+
+// ============================================
 // TYPE HELPERS
 // ============================================
 export type DeviceResponse = z.infer<typeof api.devices.get.responses[200]>;

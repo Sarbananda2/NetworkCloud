@@ -7,6 +7,36 @@ import { users } from "./models/auth";
 // Export everything from auth model (users AND sessions tables)
 export * from "./models/auth";
 
+// === DEVICE AUTHORIZATIONS (OAuth Device Flow) ===
+
+export const deviceAuthorizations = pgTable("device_authorizations", {
+  id: serial("id").primaryKey(),
+  deviceCodeHash: varchar("device_code_hash", { length: 64 }).notNull().unique(),
+  userCode: varchar("user_code", { length: 16 }).notNull().unique(),
+  hostname: varchar("hostname", { length: 255 }),
+  macAddress: varchar("mac_address", { length: 17 }),
+  userId: varchar("user_id", { length: 255 }),
+  status: varchar("status", { length: 20 }).notNull().default("pending"),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const deviceAuthorizationsRelations = relations(deviceAuthorizations, ({ one }) => ({
+  user: one(users, {
+    fields: [deviceAuthorizations.userId],
+    references: [users.id],
+  }),
+}));
+
+export type DeviceAuthorization = typeof deviceAuthorizations.$inferSelect;
+
+export const insertDeviceAuthorizationSchema = createInsertSchema(deviceAuthorizations).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertDeviceAuthorization = z.infer<typeof insertDeviceAuthorizationSchema>;
+
 // === AGENT TOKENS ===
 
 export const agentTokens = pgTable("agent_tokens", {
