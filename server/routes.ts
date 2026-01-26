@@ -97,6 +97,29 @@ export async function registerRoutes(
     }
   });
 
+  // Delete device (user-facing)
+  app.delete(api.devices.delete.path, isAuthenticated, async (req: any, res) => {
+    try {
+      const deviceId = parseInt(req.params.id);
+      if (isNaN(deviceId)) {
+        return res.status(400).json({ message: "Invalid device ID" });
+      }
+
+      const userId = req.user.claims.sub;
+      const device = await storage.getDevice(deviceId);
+
+      if (!device || device.userId !== userId) {
+        return res.status(404).json({ message: "Device not found" });
+      }
+
+      await storage.deleteDevice(deviceId);
+      res.json({ message: "Device deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting device:", error);
+      res.status(500).json({ message: "Internal Server Error" });
+    }
+  });
+
   // Account deletion endpoint
   app.delete("/api/account", isAuthenticated, async (req: any, res) => {
     try {

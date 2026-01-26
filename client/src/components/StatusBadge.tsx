@@ -3,9 +3,10 @@ import { clsx } from "clsx";
 interface StatusBadgeProps {
   status: string;
   className?: string;
+  "data-testid"?: string;
 }
 
-export function StatusBadge({ status, className }: StatusBadgeProps) {
+export function StatusBadge({ status, className, "data-testid": testId }: StatusBadgeProps) {
   const normalizedStatus = status.toLowerCase();
   
   let colors = "bg-gray-100 text-gray-600 border-gray-200";
@@ -23,11 +24,14 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
   }
 
   return (
-    <span className={clsx(
-      "inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium border",
-      colors,
-      className
-    )}>
+    <span 
+      className={clsx(
+        "inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium border",
+        colors,
+        className
+      )}
+      data-testid={testId}
+    >
       <span className={clsx("w-2 h-2 rounded-full", dotColor)} />
       {status.charAt(0).toUpperCase() + status.slice(1)}
     </span>
