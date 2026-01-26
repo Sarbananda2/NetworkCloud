@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link2, Loader2, CheckCircle2, XCircle, Monitor, AlertCircle, ArrowLeft } from "lucide-react";
 import logoUrl from "@/assets/logo.png";
 import { useAuth } from "@/hooks/use-auth";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 
 type Step = "enter_code" | "confirm" | "success" | "denied" | "error";
@@ -17,9 +17,19 @@ interface DeviceInfo {
   createdAt: string;
 }
 
+// Format code to uppercase with hyphen separator (e.g., "ABCD-1234")
+const formatCodeInput = (value: string) => {
+  const cleaned = value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  if (cleaned.length > 4) {
+    return cleaned.slice(0, 4) + "-" + cleaned.slice(4, 8);
+  }
+  return cleaned;
+};
+
 export default function DeviceLinkPage() {
   const { isAuthenticated, isLoading } = useAuth();
   const [, setLocation] = useLocation();
+  const searchString = useSearch();
   const [step, setStep] = useState<Step>("enter_code");
   const [userCode, setUserCode] = useState("");
   const [deviceInfo, setDeviceInfo] = useState<DeviceInfo | null>(null);
@@ -27,13 +37,15 @@ export default function DeviceLinkPage() {
   const [isApproving, setIsApproving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const formatCodeInput = (value: string) => {
-    const cleaned = value.toUpperCase().replace(/[^A-Z0-9]/g, "");
-    if (cleaned.length > 4) {
-      return cleaned.slice(0, 4) + "-" + cleaned.slice(4, 8);
+  // Prefill user code from URL parameter if provided
+  useEffect(() => {
+    const params = new URLSearchParams(searchString);
+    const codeFromUrl = params.get("user_code");
+    if (codeFromUrl) {
+      const formatted = formatCodeInput(codeFromUrl);
+      setUserCode(formatted);
     }
-    return cleaned;
-  };
+  }, [searchString]);
 
   const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatCodeInput(e.target.value);
