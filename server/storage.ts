@@ -9,10 +9,11 @@ export interface IStorage {
   getDeviceNetworkState(deviceId: number): Promise<NetworkState | undefined>;
   
   // Device operations for agent
-  createDevice(device: Omit<Device, "id" | "createdAt" | "lastSeenAt"> & { userId: string }): Promise<Device>;
-  updateDevice(id: number, updates: Partial<Pick<Device, "name" | "status" | "macAddress">>): Promise<Device | undefined>;
+  createDevice(device: Omit<Device, "id" | "createdAt" | "lastSeenAt"> & { userId: string; agentTokenId?: number | null }): Promise<Device>;
+  updateDevice(id: number, updates: Partial<Pick<Device, "name" | "status" | "macAddress" | "agentTokenId">>): Promise<Device | undefined>;
   updateNetworkState(deviceId: number, ipAddress: string | undefined, isLastKnown: boolean, adapters?: NetworkAdapter[]): Promise<NetworkState>;
   deleteDevice(id: number): Promise<boolean>;
+  deleteDeviceAndRevokeAgent(id: number, userId: string): Promise<{ deleted: boolean; agentRevoked: boolean }>;
   getDeviceByMac(userId: string, macAddress: string): Promise<Device | undefined>;
   
   // Agent token operations
@@ -112,7 +113,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async updateDevice(id: number, updates: Partial<Pick<Device, "name" | "status" | "macAddress">>): Promise<Device | undefined> {
+  async updateDevice(id: number, updates: Partial<Pick<Device, "name" | "status" | "macAddress" | "agentTokenId">>): Promise<Device | undefined> {
     const [updated] = await db.update(devices)
       .set({ ...updates, lastSeenAt: new Date() })
       .where(eq(devices.id, id))
@@ -124,6 +125,27 @@ export class DatabaseStorage implements IStorage {
     await db.delete(deviceNetworkStates).where(eq(deviceNetworkStates.deviceId, id));
     const result = await db.delete(devices).where(eq(devices.id, id)).returning();
     return result.length > 0;
+  }
+
+  async deleteDeviceAndRevokeAgent(id: number, userId: string): Promise<{ deleted: boolean; agentRevoked: boolean }> {
+    // First get the device to find its agent token
+    const device = await this.getDevice(id);
+    if (!device || device.userId !== userId) {
+      return { deleted: false, agentRevoked: false };
+    }
+    
+    // Delete the network state and device
+    await db.delete(deviceNetworkStates).where(eq(deviceNetworkStates.deviceId, id));
+    const result = await db.delete(devices).where(eq(devices.id, id)).returning();
+    const deleted = result.length > 0;
+    
+    // If device had an agent token, revoke it
+    let agentRevoked = false;
+    if (device.agentTokenId) {
+      agentRevoked = await this.revokeAgentToken(device.agentTokenId, userId);
+    }
+    
+    return { deleted, agentRevoked };
   }
 
   async getDeviceByMac(userId: string, macAddress: string): Promise<Device | undefined> {

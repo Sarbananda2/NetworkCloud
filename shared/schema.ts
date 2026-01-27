@@ -96,6 +96,7 @@ export const agentTokensRelations = relations(agentTokens, ({ one }) => ({
 export const devices = pgTable("devices", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull().references(() => users.id),
+  agentTokenId: integer("agent_token_id").references(() => agentTokens.id, { onDelete: "set null" }),
   name: text("name").notNull(),
   macAddress: varchar("mac_address", { length: 17 }),
   status: text("status").notNull().default("offline"),

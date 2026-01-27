@@ -112,8 +112,12 @@ export async function registerRoutes(
         return res.status(404).json({ message: "Device not found" });
       }
 
-      await storage.deleteDevice(deviceId);
-      res.json({ message: "Device deleted successfully" });
+      const result = await storage.deleteDeviceAndRevokeAgent(deviceId, userId);
+      if (result.agentRevoked) {
+        res.json({ message: "Device deleted and associated NetworkCloud app access revoked" });
+      } else {
+        res.json({ message: "Device deleted successfully" });
+      }
     } catch (error) {
       console.error("Error deleting device:", error);
       res.status(500).json({ message: "Internal Server Error" });
@@ -402,12 +406,18 @@ export async function registerRoutes(
       }
       
       const userId = req.agentUserId!;
+      const agentTokenId = req.agentTokenId!;
       const { name, macAddress, status, ipAddress, adapters } = parseResult.data;
       
       if (macAddress) {
         const existing = await storage.getDeviceByMac(userId, macAddress);
         if (existing) {
-          const updated = await storage.updateDevice(existing.id, { name, status: status || "online" });
+          // Update existing device and link to this agent token
+          const updated = await storage.updateDevice(existing.id, { 
+            name, 
+            status: status || "online",
+            agentTokenId 
+          });
           if (ipAddress !== undefined || adapters !== undefined) {
             await storage.updateNetworkState(existing.id, ipAddress, false, adapters);
           }
@@ -417,6 +427,7 @@ export async function registerRoutes(
       
       const device = await storage.createDevice({
         userId,
+        agentTokenId,
         name,
         macAddress: macAddress || null,
         status: status || "online",
@@ -484,6 +495,7 @@ export async function registerRoutes(
         return res.status(404).json({ message: "Device not found" });
       }
       
+      // Agent-initiated delete doesn't revoke itself, just deletes the device
       await storage.deleteDevice(deviceId);
       res.json({ message: "Device deleted successfully" });
     } catch (error) {
@@ -500,6 +512,7 @@ export async function registerRoutes(
       }
       
       const userId = req.agentUserId!;
+      const agentTokenId = req.agentTokenId!;
       const { devices: incomingDevices } = parseResult.data;
       
       const existingDevices = await storage.getDevices(userId);
@@ -513,14 +526,14 @@ export async function registerRoutes(
         
         if (macAddress && existingByMac.has(macAddress)) {
           const existing = existingByMac.get(macAddress)!;
-          await storage.updateDevice(existing.id, { name, status });
+          await storage.updateDevice(existing.id, { name, status, agentTokenId });
           if (ipAddress !== undefined || adapters !== undefined) {
             await storage.updateNetworkState(existing.id, ipAddress, false, adapters);
           }
           existingByMac.delete(macAddress);
           updated++;
         } else {
-          const device = await storage.createDevice({ userId, name, macAddress: macAddress || null, status });
+          const device = await storage.createDevice({ userId, agentTokenId, name, macAddress: macAddress || null, status });
           if (ipAddress !== undefined || adapters !== undefined) {
             await storage.updateNetworkState(device.id, ipAddress, false, adapters);
           }
