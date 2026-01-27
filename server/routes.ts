@@ -402,14 +402,14 @@ export async function registerRoutes(
       }
       
       const userId = req.agentUserId!;
-      const { name, macAddress, status, ipAddress } = parseResult.data;
+      const { name, macAddress, status, ipAddress, adapters } = parseResult.data;
       
       if (macAddress) {
         const existing = await storage.getDeviceByMac(userId, macAddress);
         if (existing) {
           const updated = await storage.updateDevice(existing.id, { name, status: status || "online" });
-          if (ipAddress) {
-            await storage.updateNetworkState(existing.id, ipAddress, false);
+          if (ipAddress !== undefined || adapters !== undefined) {
+            await storage.updateNetworkState(existing.id, ipAddress, false, adapters);
           }
           return res.status(200).json(updated);
         }
@@ -422,8 +422,8 @@ export async function registerRoutes(
         status: status || "online",
       });
       
-      if (ipAddress) {
-        await storage.updateNetworkState(device.id, ipAddress, false);
+      if (ipAddress !== undefined || adapters !== undefined) {
+        await storage.updateNetworkState(device.id, ipAddress, false, adapters);
       }
       
       res.status(201).json(device);
@@ -452,15 +452,15 @@ export async function registerRoutes(
         return res.status(404).json({ message: "Device not found" });
       }
       
-      const { name, status, ipAddress } = parseResult.data;
+      const { name, status, ipAddress, adapters } = parseResult.data;
       const updates: any = {};
       if (name) updates.name = name;
       if (status) updates.status = status;
       
       const updated = await storage.updateDevice(deviceId, updates);
       
-      if (ipAddress) {
-        await storage.updateNetworkState(deviceId, ipAddress, false);
+      if (ipAddress !== undefined || adapters !== undefined) {
+        await storage.updateNetworkState(deviceId, ipAddress, false, adapters);
       }
       
       res.json(updated);
@@ -509,20 +509,20 @@ export async function registerRoutes(
       let updated = 0;
       
       for (const incoming of incomingDevices) {
-        const { name, macAddress, status, ipAddress } = incoming;
+        const { name, macAddress, status, ipAddress, adapters } = incoming;
         
         if (macAddress && existingByMac.has(macAddress)) {
           const existing = existingByMac.get(macAddress)!;
           await storage.updateDevice(existing.id, { name, status });
-          if (ipAddress) {
-            await storage.updateNetworkState(existing.id, ipAddress, false);
+          if (ipAddress !== undefined || adapters !== undefined) {
+            await storage.updateNetworkState(existing.id, ipAddress, false, adapters);
           }
           existingByMac.delete(macAddress);
           updated++;
         } else {
           const device = await storage.createDevice({ userId, name, macAddress: macAddress || null, status });
-          if (ipAddress) {
-            await storage.updateNetworkState(device.id, ipAddress, false);
+          if (ipAddress !== undefined || adapters !== undefined) {
+            await storage.updateNetworkState(device.id, ipAddress, false, adapters);
           }
           created++;
         }

@@ -17,11 +17,46 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
-import { ArrowLeft, Network, Activity, Clock, Shield, Trash2 } from "lucide-react";
+import { ArrowLeft, Network, Activity, Clock, Shield, Trash2, Wifi, Cable, Globe, MonitorSmartphone, Server } from "lucide-react";
 import { motion } from "framer-motion";
+import type { NetworkAdapter } from "@shared/schema";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+
+function getAdapterIcon(type: NetworkAdapter["type"]) {
+  switch (type) {
+    case "ethernet":
+      return Cable;
+    case "wifi":
+      return Wifi;
+    case "virtual":
+      return MonitorSmartphone;
+    case "vpn":
+      return Globe;
+    case "loopback":
+      return Server;
+    default:
+      return Network;
+  }
+}
+
+function getAdapterLabel(type: NetworkAdapter["type"]) {
+  switch (type) {
+    case "ethernet":
+      return "Ethernet";
+    case "wifi":
+      return "Wi-Fi";
+    case "virtual":
+      return "Virtual";
+    case "vpn":
+      return "VPN";
+    case "loopback":
+      return "Loopback";
+    default:
+      return "Network";
+  }
+}
 
 export default function DeviceDetail() {
   const [, params] = useRoute("/devices/:id");
@@ -150,7 +185,7 @@ export default function DeviceDetail() {
             {/* Main Info Grid */}
             <div className="grid md:grid-cols-3 gap-6">
               
-              {/* Network Card (Hero) */}
+              {/* Network Card (Hero) - Shows primary IP or summary */}
               <Card className="md:col-span-2 p-8 bg-gradient-to-br from-white to-slate-50 border-border shadow-lg overflow-hidden relative">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
                 
@@ -165,7 +200,7 @@ export default function DeviceDetail() {
                   <div className="space-y-6">
                     <div>
                       <p className="text-sm text-muted-foreground font-medium uppercase tracking-wider mb-2">
-                        IP Address
+                        Primary IP Address
                       </p>
                       <div className="font-mono text-4xl font-bold tracking-tight text-foreground bg-white/50 backdrop-blur w-fit px-4 py-2 rounded-xl border border-border/50 shadow-sm" data-testid="text-device-ip">
                         {networkState?.ipAddress || "Unknown"}
@@ -177,6 +212,12 @@ export default function DeviceDetail() {
                         <Activity className="w-4 h-4" />
                         Showing last known configuration
                       </div>
+                    )}
+
+                    {networkState?.adapters && networkState.adapters.length > 0 && (
+                      <p className="text-sm text-muted-foreground" data-testid="text-adapter-count">
+                        {networkState.adapters.length} network adapter{networkState.adapters.length !== 1 ? 's' : ''} detected
+                      </p>
                     )}
                   </div>
                 </div>
@@ -227,6 +268,114 @@ export default function DeviceDetail() {
                 </Card>
               </div>
             </div>
+
+            {/* Network Adapters Section */}
+            {networkState?.adapters && networkState.adapters.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <Network className="w-5 h-5 text-muted-foreground" />
+                  <h2 className="text-xl font-semibold" data-testid="text-adapters-heading">Network Adapters</h2>
+                </div>
+                
+                <div className="grid gap-4 md:grid-cols-2">
+                  {networkState.adapters.map((adapter, index) => {
+                    const AdapterIcon = getAdapterIcon(adapter.type);
+                    return (
+                      <Card 
+                        key={`${adapter.name}-${index}`} 
+                        className="p-5 bg-white shadow-sm border-border"
+                        data-testid={`card-adapter-${index}`}
+                      >
+                        <div className="flex items-start gap-4">
+                          <div className={`p-2 rounded-lg ${
+                            adapter.connected 
+                              ? 'bg-emerald-100 text-emerald-700' 
+                              : 'bg-gray-100 text-gray-500'
+                          }`}>
+                            <AdapterIcon className="w-5 h-5" />
+                          </div>
+                          
+                          <div className="flex-1 min-w-0 space-y-3">
+                            <div>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h3 className="font-semibold truncate" data-testid={`text-adapter-name-${index}`}>
+                                  {adapter.name}
+                                </h3>
+                                <span className={`text-xs px-2 py-0.5 rounded-full ${
+                                  adapter.connected 
+                                    ? 'bg-emerald-100 text-emerald-700' 
+                                    : 'bg-gray-100 text-gray-500'
+                                }`} data-testid={`badge-adapter-status-${index}`}>
+                                  {adapter.connected ? 'Connected' : 'Disconnected'}
+                                </span>
+                              </div>
+                              <p className="text-xs text-muted-foreground" data-testid={`text-adapter-type-${index}`}>
+                                {getAdapterLabel(adapter.type)}
+                              </p>
+                            </div>
+                            
+                            <div className="grid gap-2 text-sm">
+                              {adapter.ipv4 && (
+                                <div className="flex justify-between gap-2">
+                                  <span className="text-muted-foreground">IPv4</span>
+                                  <span className="font-mono font-medium" data-testid={`text-adapter-ipv4-${index}`}>{adapter.ipv4}</span>
+                                </div>
+                              )}
+                              {adapter.ipv6 && (
+                                <div className="flex justify-between gap-2">
+                                  <span className="text-muted-foreground">IPv6</span>
+                                  <span className="font-mono text-xs font-medium truncate max-w-[180px]" data-testid={`text-adapter-ipv6-${index}`}>{adapter.ipv6}</span>
+                                </div>
+                              )}
+                              {adapter.macAddress && (
+                                <div className="flex justify-between gap-2">
+                                  <span className="text-muted-foreground">MAC</span>
+                                  <span className="font-mono text-xs" data-testid={`text-adapter-mac-${index}`}>{adapter.macAddress}</span>
+                                </div>
+                              )}
+                              {adapter.gateway && (
+                                <div className="flex justify-between gap-2">
+                                  <span className="text-muted-foreground">Gateway</span>
+                                  <span className="font-mono" data-testid={`text-adapter-gateway-${index}`}>{adapter.gateway}</span>
+                                </div>
+                              )}
+                              {adapter.subnetMask && (
+                                <div className="flex justify-between gap-2">
+                                  <span className="text-muted-foreground">Subnet</span>
+                                  <span className="font-mono" data-testid={`text-adapter-subnet-${index}`}>{adapter.subnetMask}</span>
+                                </div>
+                              )}
+                              {adapter.dns && adapter.dns.length > 0 && (
+                                <div className="flex justify-between gap-2">
+                                  <span className="text-muted-foreground">DNS</span>
+                                  <span className="font-mono text-xs text-right" data-testid={`text-adapter-dns-${index}`}>
+                                    {adapter.dns.join(', ')}
+                                  </span>
+                                </div>
+                              )}
+                              {adapter.dhcpEnabled !== null && adapter.dhcpEnabled !== undefined && (
+                                <div className="flex justify-between gap-2">
+                                  <span className="text-muted-foreground">DHCP</span>
+                                  <span className={adapter.dhcpEnabled ? 'text-emerald-600' : 'text-muted-foreground'} data-testid={`text-adapter-dhcp-${index}`}>
+                                    {adapter.dhcpEnabled ? 'Enabled' : 'Disabled'}
+                                  </span>
+                                </div>
+                              )}
+                              {adapter.dhcpServer && (
+                                <div className="flex justify-between gap-2">
+                                  <span className="text-muted-foreground">DHCP Server</span>
+                                  <span className="font-mono" data-testid={`text-adapter-dhcp-server-${index}`}>{adapter.dhcpServer}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
           </motion.div>
         )}

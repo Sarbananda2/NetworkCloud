@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { devices, deviceNetworkStates, users, agentTokens, deviceAuthorizations, type Device, type NetworkState, type AgentToken, type DeviceAuthorization } from "@shared/schema";
+import { devices, deviceNetworkStates, users, agentTokens, deviceAuthorizations, type Device, type NetworkState, type AgentToken, type DeviceAuthorization, type NetworkAdapter } from "@shared/schema";
 import { eq, desc, inArray, isNull, and, lt } from "drizzle-orm";
 
 export interface IStorage {
@@ -11,7 +11,7 @@ export interface IStorage {
   // Device operations for agent
   createDevice(device: Omit<Device, "id" | "createdAt" | "lastSeenAt"> & { userId: string }): Promise<Device>;
   updateDevice(id: number, updates: Partial<Pick<Device, "name" | "status" | "macAddress">>): Promise<Device | undefined>;
-  updateNetworkState(deviceId: number, ipAddress: string, isLastKnown: boolean): Promise<NetworkState>;
+  updateNetworkState(deviceId: number, ipAddress: string | undefined, isLastKnown: boolean, adapters?: NetworkAdapter[]): Promise<NetworkState>;
   deleteDevice(id: number): Promise<boolean>;
   getDeviceByMac(userId: string, macAddress: string): Promise<Device | undefined>;
   
@@ -67,25 +67,49 @@ export class DatabaseStorage implements IStorage {
     return newDevice;
   }
 
-  async updateNetworkState(deviceId: number, ipAddress: string, isLastKnown: boolean): Promise<NetworkState> {
-    // Upsert network state
-    const [state] = await db.insert(deviceNetworkStates)
-      .values({
-        deviceId,
-        ipAddress,
-        isLastKnown,
-        updatedAt: new Date()
-      })
-      .onConflictDoUpdate({
-        target: deviceNetworkStates.deviceId,
-        set: {
-          ipAddress,
+  async updateNetworkState(
+    deviceId: number, 
+    ipAddress: string | undefined, 
+    isLastKnown: boolean, 
+    adapters?: NetworkAdapter[]
+  ): Promise<NetworkState> {
+    // Build update set with only provided fields to avoid overwriting existing values
+    const updateSet: Record<string, any> = {
+      isLastKnown,
+      updatedAt: new Date()
+    };
+    
+    // Only include fields that are explicitly provided
+    if (ipAddress !== undefined && ipAddress !== "") {
+      updateSet.ipAddress = ipAddress;
+    }
+    if (adapters !== undefined) {
+      updateSet.adapters = adapters;
+    }
+    
+    // Check if record exists first
+    const existing = await this.getDeviceNetworkState(deviceId);
+    
+    if (existing) {
+      // Update existing record with only the provided fields
+      const [state] = await db.update(deviceNetworkStates)
+        .set(updateSet)
+        .where(eq(deviceNetworkStates.deviceId, deviceId))
+        .returning();
+      return state;
+    } else {
+      // Insert new record with typed values
+      const [state] = await db.insert(deviceNetworkStates)
+        .values({
+          deviceId,
           isLastKnown,
-          updatedAt: new Date()
-        }
-      })
-      .returning();
-    return state;
+          updatedAt: new Date(),
+          ipAddress: (ipAddress !== undefined && ipAddress !== "") ? ipAddress : null,
+          adapters: adapters !== undefined ? adapters : null,
+        })
+        .returning();
+      return state;
+    }
   }
 
   async updateDevice(id: number, updates: Partial<Pick<Device, "name" | "status" | "macAddress">>): Promise<Device | undefined> {

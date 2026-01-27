@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { devices, deviceNetworkStates, agentTokens } from './schema';
+import { devices, deviceNetworkStates, agentTokens, networkAdapterSchema, networkAdaptersArraySchema } from './schema';
 
 // ============================================
 // SHARED ERROR SCHEMAS
@@ -169,6 +169,7 @@ export const api = {
         macAddress: z.string().regex(/^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$/).optional(),
         status: z.enum(['online', 'offline', 'away']).default('online'),
         ipAddress: z.string().ip().optional(),
+        adapters: networkAdaptersArraySchema.optional(), // Full network adapter data
       }),
       responses: {
         201: z.custom<typeof devices.$inferSelect>(),
@@ -182,6 +183,7 @@ export const api = {
         name: z.string().min(1).optional(),
         status: z.enum(['online', 'offline', 'away']).optional(),
         ipAddress: z.string().ip().optional(),
+        adapters: networkAdaptersArraySchema.optional(), // Full network adapter data
       }),
       responses: {
         200: z.custom<typeof devices.$inferSelect>(),
@@ -225,6 +227,7 @@ export const api = {
           macAddress: z.string().regex(/^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$/).optional(),
           status: z.enum(['online', 'offline', 'away']),
           ipAddress: z.string().ip().optional(),
+          adapters: networkAdaptersArraySchema.optional(), // Full network adapter data
         })),
       }),
       responses: {

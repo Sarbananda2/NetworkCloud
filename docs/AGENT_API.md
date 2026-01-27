@@ -136,7 +136,8 @@ Content-Type: application/json
 | name | string | Yes | Device display name (min 1 character) |
 | macAddress | string | No | MAC address in format `XX:XX:XX:XX:XX:XX` |
 | status | string | No | One of: `online`, `offline`, `away`. Default: `online` |
-| ipAddress | string | No | Valid IPv4 or IPv6 address |
+| ipAddress | string | No | Valid IPv4 or IPv6 address (primary IP) |
+| adapters | array | No | Full network adapter data (see [Network Adapters Schema](#network-adapters-schema)) |
 
 **Response (201 Created):** New device
 ```json
@@ -277,7 +278,8 @@ Content-Type: application/json
 | name | string | Yes | Device display name |
 | macAddress | string | No | MAC address for matching |
 | status | string | Yes | One of: `online`, `offline`, `away` |
-| ipAddress | string | No | Device IP address |
+| ipAddress | string | No | Device IP address (primary IP) |
+| adapters | array | No | Full network adapter data (see [Network Adapters Schema](#network-adapters-schema)) |
 
 **Response (200 OK):**
 ```json
@@ -316,6 +318,112 @@ Must be one of:
 - `online` - Device is currently reachable
 - `offline` - Device is not reachable
 - `away` - Device was recently active but currently unreachable
+
+---
+
+## Network Adapters Schema
+
+The `adapters` field allows the agent to send detailed network adapter information similar to what `ipconfig /all` provides on Windows.
+
+### Adapter Object
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| name | string | Yes | Adapter name (e.g., "Ethernet", "Wi-Fi", "Hyper-V Virtual Ethernet Adapter") |
+| type | string | Yes | Adapter type: `ethernet`, `wifi`, `virtual`, `vpn`, `loopback`, or `other` |
+| macAddress | string | No | Physical/MAC address |
+| ipv4 | string | No | IPv4 address |
+| ipv6 | string | No | IPv6 address |
+| gateway | string | No | Default gateway address |
+| subnetMask | string | No | Subnet mask (e.g., "255.255.255.0") |
+| dns | array | No | Array of DNS server addresses |
+| dhcpEnabled | boolean | No | Whether DHCP is enabled |
+| dhcpServer | string | No | DHCP server address |
+| connected | boolean | No | Whether the adapter has media connected (default: true) |
+
+### Example Request with Adapters
+
+```json
+{
+  "name": "Home Desktop",
+  "macAddress": "AA:BB:CC:DD:EE:FF",
+  "status": "online",
+  "ipAddress": "192.168.1.100",
+  "adapters": [
+    {
+      "name": "Ethernet",
+      "type": "ethernet",
+      "macAddress": "AA:BB:CC:DD:EE:FF",
+      "ipv4": "192.168.1.100",
+      "ipv6": "fe80::1234:5678:abcd:ef00",
+      "gateway": "192.168.1.1",
+      "subnetMask": "255.255.255.0",
+      "dns": ["8.8.8.8", "8.8.4.4"],
+      "dhcpEnabled": true,
+      "dhcpServer": "192.168.1.1",
+      "connected": true
+    },
+    {
+      "name": "Wi-Fi",
+      "type": "wifi",
+      "macAddress": "11:22:33:44:55:66",
+      "connected": false
+    },
+    {
+      "name": "Hyper-V Virtual Ethernet Adapter",
+      "type": "virtual",
+      "ipv4": "172.17.0.1",
+      "subnetMask": "255.255.0.0",
+      "connected": true
+    }
+  ]
+}
+```
+
+### Adapter Type Mapping
+
+When parsing `ipconfig /all` output, map adapter descriptions to types:
+
+| Windows Adapter Description Contains | Type |
+|--------------------------------------|------|
+| "Ethernet", "Realtek", "Intel(R) Ethernet" | `ethernet` |
+| "Wi-Fi", "Wireless", "802.11" | `wifi` |
+| "Hyper-V", "VirtualBox", "VMware", "Docker" | `virtual` |
+| "VPN", "TAP", "TUN", "WireGuard" | `vpn` |
+| "Loopback" | `loopback` |
+| Other | `other` |
+
+### Go Code Example
+
+```go
+type NetworkAdapter struct {
+    Name        string   `json:"name"`
+    Type        string   `json:"type"`
+    MacAddress  string   `json:"macAddress,omitempty"`
+    IPv4        string   `json:"ipv4,omitempty"`
+    IPv6        string   `json:"ipv6,omitempty"`
+    Gateway     string   `json:"gateway,omitempty"`
+    SubnetMask  string   `json:"subnetMask,omitempty"`
+    DNS         []string `json:"dns,omitempty"`
+    DHCPEnabled *bool    `json:"dhcpEnabled,omitempty"`
+    DHCPServer  string   `json:"dhcpServer,omitempty"`
+    Connected   bool     `json:"connected"`
+}
+
+// GetNetworkAdapters returns all network adapters from ipconfig /all
+func GetNetworkAdapters() ([]NetworkAdapter, error) {
+    cmd := exec.Command("ipconfig", "/all")
+    output, err := cmd.Output()
+    if err != nil {
+        return nil, err
+    }
+    
+    // Parse output and create NetworkAdapter objects
+    // ... parsing logic here ...
+    
+    return adapters, nil
+}
+```
 
 ---
 

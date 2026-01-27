@@ -1,8 +1,28 @@
-import { pgTable, text, serial, timestamp, boolean, varchar, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, boolean, varchar, integer, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
 import { users } from "./models/auth";
+
+// === NETWORK ADAPTER SCHEMA ===
+// Represents a single network adapter from ipconfig /all
+export const networkAdapterSchema = z.object({
+  name: z.string(), // e.g., "Ethernet", "Wi-Fi", "Hyper-V Virtual Ethernet Adapter"
+  type: z.enum(["ethernet", "wifi", "virtual", "vpn", "loopback", "other"]),
+  macAddress: z.string().nullable().optional(), // Physical address
+  ipv4: z.string().nullable().optional(), // IPv4 address
+  ipv6: z.string().nullable().optional(), // IPv6 address
+  gateway: z.string().nullable().optional(), // Default gateway
+  subnetMask: z.string().nullable().optional(),
+  dns: z.array(z.string()).nullable().optional(), // DNS servers
+  dhcpEnabled: z.boolean().nullable().optional(),
+  dhcpServer: z.string().nullable().optional(),
+  connected: z.boolean().default(true), // Whether adapter is connected/has media
+});
+
+export type NetworkAdapter = z.infer<typeof networkAdapterSchema>;
+
+export const networkAdaptersArraySchema = z.array(networkAdapterSchema);
 
 // Export everything from auth model (users AND sessions tables)
 export * from "./models/auth";
@@ -86,7 +106,8 @@ export const devices = pgTable("devices", {
 export const deviceNetworkStates = pgTable("device_network_states", {
   id: serial("id").primaryKey(),
   deviceId: integer("device_id").notNull().references(() => devices.id).unique(), // Unique - one state per device
-  ipAddress: text("ip_address"),
+  ipAddress: text("ip_address"), // Primary IP (backward compatibility)
+  adapters: jsonb("adapters").$type<NetworkAdapter[]>(), // Full adapter data from ipconfig /all
   isLastKnown: boolean("is_last_known").default(false),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
