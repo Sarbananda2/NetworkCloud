@@ -1,8 +1,8 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { LogOut, User, Settings, Trash2, Key } from "lucide-react";
-import logoUrl from "@/assets/logo.png";
+import { LogOut, User, Settings, Trash2, Key, LayoutDashboard, Cloud, Activity, Power, Network, FileText } from "lucide-react";
+const logoUrl = "/favicon.png";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -57,30 +57,57 @@ export function Layout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Top Navigation */}
-      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-8">
-            <Link href="/" className="flex items-center gap-2">
-              <img src={logoUrl} alt="NetworkCloud" className="h-8 w-8 object-contain" data-testid="img-logo-header" />
-            </Link>
-
-            <nav className="hidden md:flex items-center gap-6">
-              <Link href="/devices">
-                <span className={`text-sm font-medium transition-colors hover:text-primary cursor-pointer ${location.startsWith('/devices') ? 'text-primary' : 'text-muted-foreground'}`}>
-                  Dashboard
-                </span>
-              </Link>
-              <Link href="/agent-tokens">
-                <span className={`text-sm font-medium transition-colors hover:text-primary cursor-pointer flex items-center gap-1.5 ${location === '/agent-tokens' ? 'text-primary' : 'text-muted-foreground'}`}>
-                  <Key className="w-3.5 h-3.5" />
-                  Agent Tokens
-                </span>
-              </Link>
-            </nav>
+    <div className="min-h-screen bg-background text-foreground flex">
+      <aside className="w-64 border-r border-border/40 bg-background/80 backdrop-blur px-5 py-6 flex flex-col gap-8">
+        <Link href="/" className="flex items-center gap-3">
+          <img src={logoUrl} alt="NetworkCloud" className="h-10 w-10 object-contain" data-testid="img-logo-header" />
+          <div className="leading-tight">
+            <div className="text-sm font-semibold">NetworkCloud</div>
+            <div className="text-xs text-muted-foreground">Agent</div>
           </div>
+        </Link>
 
+        <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Navigation</div>
+        <nav className="flex flex-col gap-2">
+          <Link href="/devices">
+            <span className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer flex items-center gap-2 ${location.startsWith('/devices') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'}`}>
+              <LayoutDashboard className="w-4 h-4" />
+              Dashboard
+            </span>
+          </Link>
+          <span className="px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer flex items-center gap-2 text-muted-foreground hover:text-foreground hover:bg-secondary/50">
+            <Network className="w-4 h-4" />
+            Network
+          </span>
+          <span className="px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer flex items-center gap-2 text-muted-foreground hover:text-foreground hover:bg-secondary/50">
+            <Cloud className="w-4 h-4" />
+            Cloud Link
+          </span>
+          <span className="px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer flex items-center gap-2 text-muted-foreground hover:text-foreground hover:bg-secondary/50">
+            <Activity className="w-4 h-4" />
+            Status
+          </span>
+          <span className="px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer flex items-center gap-2 text-muted-foreground hover:text-foreground hover:bg-secondary/50">
+            <Power className="w-4 h-4" />
+            Service Control
+          </span>
+          <span className="px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer flex items-center gap-2 text-muted-foreground hover:text-foreground hover:bg-secondary/50">
+            <FileText className="w-4 h-4" />
+            Logs
+          </span>
+          <Link href="/agent-tokens">
+            <span className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer flex items-center gap-2 ${location === '/agent-tokens' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'}`}>
+              <Key className="w-4 h-4" />
+              Agent Tokens
+            </span>
+          </Link>
+        </nav>
+
+        <div className="mt-auto text-xs text-muted-foreground">v1.0.0</div>
+      </aside>
+
+      <div className="flex-1 flex flex-col">
+        <header className="h-16 border-b border-border/40 bg-background/80 backdrop-blur flex items-center justify-end px-6">
           <div className="flex items-center gap-2">
             <div className="hidden md:flex items-center gap-3 px-3 py-1.5 rounded-full bg-secondary/50 border border-border">
               {user?.profileImageUrl ? (
@@ -125,13 +152,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
               Logout
             </Button>
           </div>
-        </div>
-      </header>
+        </header>
 
-      {/* Main Content */}
-      <main className="flex-1 container mx-auto px-4 py-8 md:py-12">
-        {children}
-      </main>
+        <main className="flex-1 px-6 py-8 md:py-12 bg-gradient-to-b from-background via-background to-secondary/10">
+          {children}
+        </main>
+      </div>
 
       {/* Delete Account Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
