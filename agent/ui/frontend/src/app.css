@@ -490,6 +490,35 @@ pre {
     border: 1px solid var(--border-subtle);
 }
 
+.adapter-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.filter-pills {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.filter-pill {
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-muted);
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.filter-pill.active {
+    background: var(--surface-strong);
+    border-color: var(--border-subtle);
+    color: #ffffff;
+}
+
 .primary-label {
     font-size: 12px;
     text-transform: uppercase;
@@ -507,6 +536,48 @@ pre {
     gap: 14px;
     font-size: 12px;
     color: var(--text-muted);
+}
+
+.primary-summary-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    width: 100%;
+}
+
+.primary-summary-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.primary-summary-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(120px, 1fr));
+    gap: 18px;
+}
+
+.primary-heading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.adapter-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: rgba(47, 111, 222, 0.18);
+    color: #dce9ff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.adapter-icon svg {
+    width: 22px;
+    height: 22px;
 }
 
 .dns-lines {
@@ -532,8 +603,8 @@ pre {
 }
 
 .adapter-card.expanded {
-    border-color: rgba(47, 111, 222, 0.55);
-    box-shadow: 0 8px 18px rgba(16, 34, 58, 0.45);
+    border-color: rgba(47, 111, 222, 0.35);
+    box-shadow: 0 6px 14px rgba(16, 34, 58, 0.35);
 }
 
 .adapter-card:hover {
@@ -548,6 +619,28 @@ pre {
     gap: 10px;
 }
 
+.adapter-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.adapter-icon-sm {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: rgba(47, 111, 222, 0.18);
+    color: #dce9ff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.adapter-icon-sm svg {
+    width: 18px;
+    height: 18px;
+}
+
 .adapter-name {
     font-size: 15px;
     font-weight: 600;
@@ -557,6 +650,11 @@ pre {
     font-size: 12px;
     color: var(--text-muted);
     text-transform: capitalize;
+}
+
+.adapter-type-value {
+    text-transform: capitalize;
+    color: var(--text-primary);
 }
 
 .adapter-state {
@@ -578,8 +676,15 @@ pre {
 
 .adapter-key {
     display: flex;
-    justify-content: space-between;
-    font-size: 13px;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+}
+
+.adapter-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(120px, 1fr));
+    gap: 14px;
 }
 
 .key-label {
@@ -592,46 +697,159 @@ pre {
 
 .adapter-details {
     display: none;
-    font-size: 12px;
-    color: var(--text-muted);
-    gap: 6px;
-    flex-direction: column;
-}
-
-.adapter-card.expanded .adapter-details {
-    display: flex;
 }
 
 .adapter-actions {
     display: none;
-    gap: 8px;
-    margin-top: 6px;
 }
 
-.adapter-card.expanded .adapter-actions {
+
+.adapter-modal {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+}
+
+.adapter-modal.open {
     display: flex;
-    flex-wrap: wrap;
 }
 
-.group-section {
-    margin-bottom: 20px;
+.modal-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(6, 12, 22, 0.7);
+    backdrop-filter: blur(6px);
 }
 
-.group-header {
+.modal-card {
+    position: relative;
+    width: min(560px, 92vw);
+    max-height: 90vh;
+    overflow: auto;
+    background: var(--surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 18px;
+    padding: 20px;
+    box-shadow: 0 24px 60px rgba(3, 10, 20, 0.65);
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.modal-title {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
+    gap: 12px;
 }
 
-.group-title {
+.modal-name {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.modal-subtitle {
     font-size: 12px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
     color: var(--text-muted);
 }
 
-.group-count {
+.modal-close {
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.modal-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.chip {
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+}
+
+.chip.online {
+    background: rgba(47, 111, 222, 0.22);
+    color: #dce9ff;
+}
+
+.chip.offline {
+    background: rgba(130, 64, 64, 0.4);
+    color: #f3c4c4;
+}
+
+.chip.secondary {
+    background: rgba(255, 255, 255, 0.12);
+    color: #cbd6f4;
+}
+
+.chip.muted {
+    color: var(--text-muted);
+}
+
+.modal-section {
+    background: var(--surface-strong);
+    border: 1px solid var(--border-subtle);
+    border-radius: 14px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.section-title {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.detail-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.detail-label {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.detail-value {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--text-primary);
+}
+
+.copy-button {
+    border: 1px solid var(--border-subtle);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 11px;
+    border-radius: 8px;
+    padding: 2px 8px;
+    cursor: pointer;
+}
+
+.detail-empty {
     font-size: 12px;
     color: var(--text-muted);
 }

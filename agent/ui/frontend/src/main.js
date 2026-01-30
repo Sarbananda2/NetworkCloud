@@ -11,8 +11,6 @@ import {
   StopService,
   TailLogs,
   GetNetwork,
-  GetAdapterGroups,
-  SaveAdapterGroups,
 } from '../wailsjs/go/main/App';
 
 document.querySelector('#app').innerHTML = `
@@ -29,60 +27,37 @@ document.querySelector('#app').innerHTML = `
       <nav class="nav">
         <button class="nav-item active" data-target="dashboard">
           <span class="nav-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="3" width="7" height="9" rx="1"></rect>
-              <rect x="14" y="3" width="7" height="5" rx="1"></rect>
-              <rect x="14" y="12" width="7" height="9" rx="1"></rect>
-              <rect x="3" y="16" width="7" height="5" rx="1"></rect>
-            </svg>
+            ${iconSvg('dashboard')}
           </span>
           Dashboard
         </button>
         <button class="nav-item" data-target="network">
           <span class="nav-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="6" cy="6" r="2"></circle>
-              <circle cx="18" cy="6" r="2"></circle>
-              <circle cx="12" cy="18" r="2"></circle>
-              <path d="M6 8v4a2 2 0 0 0 2 2h4"></path>
-              <path d="M18 8v4a2 2 0 0 1-2 2h-4"></path>
-            </svg>
+            ${iconSvg('network')}
           </span>
           Network
         </button>
         <button class="nav-item" data-target="link">
           <span class="nav-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20 16.5a4.5 4.5 0 0 0-4-4.5 6 6 0 0 0-11.5 2A4 4 0 0 0 6 20h11a3 3 0 0 0 3-3.5z"></path>
-            </svg>
+            ${iconSvg('cloud')}
           </span>
           Cloud Link
         </button>
         <button class="nav-item" data-target="status">
           <span class="nav-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M22 12h-4l-3 9-4-18-3 9H2"></path>
-            </svg>
+            ${iconSvg('activity')}
           </span>
           Status
         </button>
         <button class="nav-item" data-target="service">
           <span class="nav-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 2v10"></path>
-              <path d="M18.4 6.6a8 8 0 1 1-12.8 0"></path>
-            </svg>
+            ${iconSvg('power')}
           </span>
           Service Control
         </button>
         <button class="nav-item" data-target="logs">
           <span class="nav-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-              <path d="M14 2v6h6"></path>
-              <path d="M16 13H8"></path>
-              <path d="M16 17H8"></path>
-            </svg>
+            ${iconSvg('file')}
           </span>
           Logs
         </button>
@@ -103,13 +78,7 @@ document.querySelector('#app').innerHTML = `
         <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="6" cy="6" r="2"></circle>
-                <circle cx="18" cy="6" r="2"></circle>
-                <circle cx="12" cy="18" r="2"></circle>
-                <path d="M6 8v4a2 2 0 0 0 2 2h4"></path>
-                <path d="M18 8v4a2 2 0 0 1-2 2h-4"></path>
-              </svg>
+              ${iconSvg('network')}
             </div>
             <div class="stat-label">Network Adapters</div>
             <div id="dashboardAdapterCount" class="stat-value">-</div>
@@ -118,9 +87,7 @@ document.querySelector('#app').innerHTML = `
           </div>
           <div class="stat-card">
             <div class="stat-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 16.5a4.5 4.5 0 0 0-4-4.5 6 6 0 0 0-11.5 2A4 4 0 0 0 6 20h11a3 3 0 0 0 3-3.5z"></path>
-              </svg>
+              ${iconSvg('cloud')}
             </div>
             <div class="stat-label">Cloud Status</div>
             <div id="dashboardCloudStatus" class="stat-value">-</div>
@@ -129,9 +96,7 @@ document.querySelector('#app').innerHTML = `
           </div>
           <div class="stat-card">
             <div class="stat-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M22 12h-4l-3 9-4-18-3 9H2"></path>
-              </svg>
+              ${iconSvg('activity')}
             </div>
             <div class="stat-label">Agent Status</div>
             <div id="dashboardAgentStatus" class="stat-value">-</div>
@@ -140,12 +105,7 @@ document.querySelector('#app').innerHTML = `
           </div>
           <div class="stat-card">
             <div class="stat-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M1.42 9a16 16 0 0 1 21.16 0"></path>
-                <path d="M5 12.5a11 11 0 0 1 14 0"></path>
-                <path d="M8.5 16a6 6 0 0 1 7 0"></path>
-                <line x1="12" y1="20" x2="12.01" y2="20"></line>
-              </svg>
+              ${iconSvg('wifi')}
             </div>
             <div class="stat-label">Primary Adapter</div>
             <div id="dashboardPrimaryName" class="stat-value">-</div>
@@ -166,8 +126,13 @@ document.querySelector('#app').innerHTML = `
             <div class="card-body">
               <div class="primary-layout">
                 <div class="primary-details">
-                  <div id="dashboardPrimaryLabel" class="primary-name">-</div>
-                  <div id="dashboardPrimaryType" class="adapter-type">-</div>
+                  <div class="primary-heading">
+                    <div id="dashboardPrimaryIcon" class="adapter-icon"></div>
+                    <div>
+                      <div id="dashboardPrimaryLabel" class="primary-name">-</div>
+                      <div id="dashboardPrimaryType" class="adapter-type">-</div>
+                    </div>
+                  </div>
                   <div class="primary-metrics">
                     <div class="metric">
                       <div class="meta-label">IP Address</div>
@@ -191,7 +156,7 @@ document.querySelector('#app').innerHTML = `
                     </div>
                     <div class="metric">
                       <div class="meta-label">Type</div>
-                      <div id="dashboardPrimaryTypeLabel" class="meta-value adapter-type">-</div>
+                      <div id="dashboardPrimaryTypeLabel" class="meta-value adapter-type-value">-</div>
                     </div>
                   </div>
                 </div>
@@ -203,26 +168,19 @@ document.querySelector('#app').innerHTML = `
             <div class="card-title">Quick Actions</div>
             <button id="dashboardRefreshNetwork" class="action-button">
               <span class="action-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21 12a9 9 0 1 1-2.64-6.36"></path>
-                  <path d="M21 3v6h-6"></path>
-                </svg>
+                ${iconSvg('refresh')}
               </span>
               Refresh Network
             </button>
             <button id="dashboardSyncCloud" class="action-button">
               <span class="action-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M20 16.5a4.5 4.5 0 0 0-4-4.5 6 6 0 0 0-11.5 2A4 4 0 0 0 6 20h11a3 3 0 0 0 3-3.5z"></path>
-                </svg>
+                ${iconSvg('cloud')}
               </span>
               Sync to Cloud
             </button>
             <button id="dashboardViewLogs" class="action-button ghost">
               <span class="action-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M22 12h-4l-3 9-4-18-3 9H2"></path>
-                </svg>
+                ${iconSvg('activity')}
               </span>
               View Activity
             </button>
@@ -247,6 +205,13 @@ document.querySelector('#app').innerHTML = `
           <button id="refreshNetwork">Refresh Network</button>
         </div>
         <div id="networkPrimary" class="primary-summary"></div>
+        <div class="adapter-toolbar">
+          <div class="filter-pills">
+            <button class="filter-pill active" data-filter="all">All</button>
+            <button class="filter-pill" data-filter="connected">Connected</button>
+            <button class="filter-pill" data-filter="disconnected">Disconnected</button>
+          </div>
+        </div>
         <div id="networkList" class="adapter-grid"></div>
       </section>
 
@@ -308,6 +273,7 @@ document.querySelector('#app').innerHTML = `
         <pre id="logs"></pre>
       </section>
     </main>
+    <div id="adapterModal" class="adapter-modal"></div>
   </div>
 `;
 
@@ -336,11 +302,11 @@ const dashboardPrimaryTypeLabelEl = document.getElementById('dashboardPrimaryTyp
 const dashboardPrimaryStateEl = document.getElementById('dashboardPrimaryState');
 const dashboardAgentPillEl = document.getElementById('dashboardAgentPill');
 const dashboardAdapterPreviewEl = document.getElementById('dashboardAdapterPreview');
-let expandedAdapterKey = null;
-let adapterGroups = {};
-let groupsLoaded = false;
+const networkFilterButtons = document.querySelectorAll('.filter-pill');
+let activeNetworkFilter = 'all';
 let lastNetworkResponse = null;
 let lastStatusResponse = null;
+let activeAdapterKey = null;
 
 function capitalize(value) {
   if (!value) {
@@ -358,36 +324,146 @@ function formatDnsLines(dnsServers) {
   return servers.map((server, index) => `${index + 1}. ${server}`).join('\n');
 }
 
+function iconSvg(name) {
+  switch (name) {
+    case 'dashboard':
+      return `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="9" rx="1"></rect>
+          <rect x="14" y="3" width="7" height="5" rx="1"></rect>
+          <rect x="14" y="12" width="7" height="9" rx="1"></rect>
+          <rect x="3" y="16" width="7" height="5" rx="1"></rect>
+        </svg>
+      `;
+    case 'network':
+      return `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="6" cy="6" r="2"></circle>
+          <circle cx="18" cy="6" r="2"></circle>
+          <circle cx="12" cy="18" r="2"></circle>
+          <path d="M6 8v4a2 2 0 0 0 2 2h4"></path>
+          <path d="M18 8v4a2 2 0 0 1-2 2h-4"></path>
+        </svg>
+      `;
+    case 'cloud':
+      return `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 16.5a4.5 4.5 0 0 0-4-4.5 6 6 0 0 0-11.5 2A4 4 0 0 0 6 20h11a3 3 0 0 0 3-3.5z"></path>
+        </svg>
+      `;
+    case 'activity':
+      return `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 12h-4l-3 9-4-18-3 9H2"></path>
+        </svg>
+      `;
+    case 'power':
+      return `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2v10"></path>
+          <path d="M18.4 6.6a8 8 0 1 1-12.8 0"></path>
+        </svg>
+      `;
+    case 'file':
+      return `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <path d="M14 2v6h6"></path>
+          <path d="M16 13H8"></path>
+          <path d="M16 17H8"></path>
+        </svg>
+      `;
+    case 'wifi':
+      return `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12.5a7 7 0 0 1 14 0"></path>
+          <path d="M8.5 12.5a3.5 3.5 0 0 1 7 0"></path>
+          <path d="M12 20h.01"></path>
+        </svg>
+      `;
+    case 'cable':
+      return `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M7 6h10v7H7z"></path>
+          <path d="M12 13v5"></path>
+          <path d="M8 11h1"></path>
+          <path d="M11 11h1"></path>
+          <path d="M15 11h1"></path>
+        </svg>
+      `;
+    case 'shield':
+      return `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3l7 4v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V7z"></path>
+          <path d="M9 12l2 2 4-4"></path>
+        </svg>
+      `;
+    case 'bluetooth':
+      return `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 8l12 8-6 4V4l6 4-12 8"></path>
+        </svg>
+      `;
+    case 'layers':
+      return `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2l9 5-9 5-9-5 9-5"></path>
+          <path d="M3 12l9 5 9-5"></path>
+          <path d="M3 17l9 5 9-5"></path>
+        </svg>
+      `;
+    case 'help':
+      return `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"></circle>
+          <path d="M12 8h.01"></path>
+          <path d="M12 12v4"></path>
+        </svg>
+      `;
+    case 'refresh':
+      return `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12a9 9 0 1 1-2.64-6.36"></path>
+          <path d="M21 3v6h-6"></path>
+        </svg>
+      `;
+    default:
+      return iconSvg('help');
+  }
+}
+
+function adapterTypeIcon(type) {
+  const normalized = String(type || '').toLowerCase();
+  if (normalized.includes('wireless') || normalized.includes('wi-fi') || normalized.includes('wifi')) {
+    return iconSvg('wifi');
+  }
+  if (normalized.includes('ethernet')) {
+    return iconSvg('cable');
+  }
+  if (normalized.includes('vpn')) {
+    return iconSvg('shield');
+  }
+  if (normalized.includes('bluetooth')) {
+    return iconSvg('bluetooth');
+  }
+  if (normalized.includes('virtual')) {
+    return iconSvg('layers');
+  }
+  return iconSvg('help');
+}
+
+function matchesNetworkFilter(adapter) {
+  if (activeNetworkFilter === 'connected') {
+    return adapter.connected;
+  }
+  if (activeNetworkFilter === 'disconnected') {
+    return !adapter.connected;
+  }
+  return true;
+}
+
 function adapterKey(adapter) {
   return `${adapter.name}::${adapter.macAddress || adapter.type || ''}`;
-}
-
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
-}
-
-async function ensureGroupsLoaded() {
-  if (groupsLoaded) {
-    return;
-  }
-  try {
-    adapterGroups = (await GetAdapterGroups()) || {};
-  } catch {
-    adapterGroups = {};
-  }
-  if (typeof adapterGroups !== 'object' || Array.isArray(adapterGroups)) {
-    adapterGroups = {};
-  }
-  groupsLoaded = true;
-}
-
-async function saveGroups() {
-  await SaveAdapterGroups(adapterGroups);
 }
 
 function setActiveSection(target) {
@@ -463,7 +539,6 @@ async function refreshLogs() {
 
 async function refreshNetwork() {
   try {
-    await ensureGroupsLoaded();
     const resp = await GetNetwork();
     lastNetworkResponse = resp;
     renderNetwork(resp);
@@ -517,6 +592,10 @@ function updateDashboardNetwork(resp) {
     if (dashboardPrimaryTypeEl) {
       dashboardPrimaryTypeEl.innerText = primary.description || primary.name || '-';
     }
+    const primaryIconEl = document.getElementById('dashboardPrimaryIcon');
+    if (primaryIconEl) {
+      primaryIconEl.innerHTML = adapterTypeIcon(primary.type);
+    }
     if (dashboardPrimaryIpDetailEl) {
       dashboardPrimaryIpDetailEl.innerText = primary.ipv4Address || '-';
     }
@@ -561,132 +640,233 @@ function renderNetwork(resp) {
     return;
   }
   if (resp.primary) {
-    const primaryDns = formatDnsLines(resp.primary.dnsServers);
+    const primaryDns = (resp.primary.dnsServers || [])[0] || '-';
     networkPrimaryEl.innerHTML = `
-      <div class="primary-label">Primary Adapter</div>
-      <div class="primary-value">${resp.primary.name}</div>
-        <div class="primary-meta">
-          <span>${resp.primary.ipv4Address || '-'}</span>
-          <span>${resp.primary.defaultGateway || '-'}</span>
-          <span class="dns-lines">${primaryDns}</span>
+      <div class="primary-summary-card">
+        <div class="primary-summary-left">
+          <div class="adapter-icon">
+            ${adapterTypeIcon(resp.primary.type)}
+          </div>
+          <div class="primary-label">Primary Adapter</div>
+          <div class="primary-value">${resp.primary.name}</div>
         </div>
-    `;
-  } else {
-    networkPrimaryEl.innerHTML = `
-      <div class="primary-label">Primary Adapter</div>
-      <div class="primary-value">Unknown</div>
-    `;
-  }
-
-  const grouped = new Map();
-  (resp.adapters || []).forEach((adapter) => {
-    const key = adapterKey(adapter);
-    const groupName = adapterGroups[key] || 'Ungrouped';
-    if (!grouped.has(groupName)) {
-      grouped.set(groupName, []);
-    }
-    grouped.get(groupName).push({ adapter, key });
-  });
-
-  const groupNames = Array.from(grouped.keys()).sort((a, b) => {
-    if (a === 'Ungrouped') return 1;
-    if (b === 'Ungrouped') return -1;
-    return a.localeCompare(b);
-  });
-
-  networkListEl.innerHTML = groupNames.map((groupName) => {
-    const adapters = grouped.get(groupName) || [];
-    const safeGroupName = escapeHtml(groupName);
-    return `
-      <div class="group-section">
-        <div class="group-header">
-          <div class="group-title">${safeGroupName}</div>
-          <div class="group-count">${adapters.length} adapter${adapters.length === 1 ? '' : 's'}</div>
-        </div>
-        <div class="adapter-grid">
-          ${adapters.map(({ adapter, key }) => renderAdapterCard(adapter, key, groupName)).join('')}
+        <div class="primary-summary-metrics">
+          <div>
+            <div class="meta-label">IP Address</div>
+            <div class="meta-value">${resp.primary.ipv4Address || '-'}</div>
+          </div>
+          <div>
+            <div class="meta-label">Gateway</div>
+            <div class="meta-value">${resp.primary.defaultGateway || '-'}</div>
+          </div>
+          <div>
+            <div class="meta-label">DNS</div>
+            <div class="meta-value">${primaryDns}</div>
+          </div>
         </div>
       </div>
     `;
-  }).join('');
+  } else {
+    networkPrimaryEl.innerHTML = `
+      <div class="primary-summary-card">
+        <div class="primary-summary-left">
+          <div class="adapter-icon">
+            ${adapterTypeIcon('')}
+          </div>
+          <div class="primary-label">Primary Adapter</div>
+          <div class="primary-value">Unknown</div>
+        </div>
+      </div>
+    `;
+  }
+
+  const allAdapters = resp.adapters || [];
+  const connectedCount = allAdapters.filter((adapter) => adapter.connected).length;
+  const disconnectedCount = allAdapters.length - connectedCount;
+  const filterCounts = {
+    all: allAdapters.length,
+    connected: connectedCount,
+    disconnected: disconnectedCount,
+  };
+
+  networkFilterButtons.forEach((button) => {
+    const filterKey = button.dataset.filter;
+    if (!filterKey || !filterCounts.hasOwnProperty(filterKey)) {
+      return;
+    }
+    const count = filterCounts[filterKey];
+    const label = filterKey.charAt(0).toUpperCase() + filterKey.slice(1);
+    button.innerText = `${label} (${count})`;
+    button.classList.toggle('active', filterKey === activeNetworkFilter);
+  });
+
+  const filteredAdapters = allAdapters.filter(matchesNetworkFilter);
+  networkListEl.innerHTML = filteredAdapters
+    .map((adapter) => renderAdapterCard(adapter, adapterKey(adapter)))
+    .join('');
 
   networkListEl.querySelectorAll('.adapter-card').forEach((card) => {
     card.addEventListener('click', () => {
       const key = card.dataset.key;
-      expandedAdapterKey = expandedAdapterKey === key ? null : key;
+      activeAdapterKey = key;
       renderNetwork(lastNetworkResponse);
     });
   });
 
-  networkListEl.querySelectorAll('.group-action').forEach((button) => {
-    button.addEventListener('click', async (event) => {
-      event.stopPropagation();
-      const key = button.dataset.key;
-      const currentGroup = adapterGroups[key];
-      const name = window.prompt('Group name', currentGroup || '');
-      if (!name) {
-        return;
-      }
-      const trimmed = name.trim();
-      if (!trimmed) {
-        return;
-      }
-      adapterGroups[key] = trimmed;
-      await saveGroups();
-      renderNetwork(lastNetworkResponse);
-    });
-  });
-
-  networkListEl.querySelectorAll('.group-remove').forEach((button) => {
-    button.addEventListener('click', async (event) => {
-      event.stopPropagation();
-      const key = button.dataset.key;
-      delete adapterGroups[key];
-      await saveGroups();
-      renderNetwork(lastNetworkResponse);
-    });
-  });
+  renderAdapterModal(resp);
 }
 
-function renderAdapterCard(adapter, key, groupName) {
-  const dns = formatDnsLines(adapter.dnsServers);
+function renderAdapterCard(adapter, key) {
   const ipAddress = adapter.ipv4Address || '-';
-  const subnetMask = adapter.subnetMask || '-';
   const gateway = adapter.defaultGateway || '-';
-  const mac = adapter.macAddress || '-';
-  const isExpanded = expandedAdapterKey === key;
-  const showRemove = groupName && groupName !== 'Ungrouped';
   return `
-    <div class="adapter-card ${isExpanded ? 'expanded' : ''}" data-key="${key}">
+    <div class="adapter-card" data-key="${key}">
       <div class="adapter-top">
-        <div>
-          <div class="adapter-name">${adapter.name}</div>
-          <div class="adapter-type">${adapter.type}</div>
+        <div class="adapter-title">
+          <div class="adapter-icon-sm">
+            ${adapterTypeIcon(adapter.type)}
+          </div>
+          <div>
+            <div class="adapter-name">${adapter.name}</div>
+            <div class="adapter-type">${adapter.type}</div>
+          </div>
         </div>
         <div class="adapter-state ${adapter.connected ? 'online' : 'offline'}">
           ${adapter.connected ? 'Connected' : 'Disconnected'}
         </div>
       </div>
-      <div class="adapter-key">
-        <div class="key-label">IP Address</div>
-        <div class="key-value">${ipAddress}</div>
-      </div>
-      <div class="adapter-key">
-        <div class="key-label">Gateway</div>
-        <div class="key-value">${gateway}</div>
-      </div>
-      <div class="adapter-details">
-        <div>MAC: ${mac}</div>
-        <div>Subnet: ${subnetMask}</div>
-        <div>DHCP: ${adapter.dhcpEnabled}</div>
-        <div class="dns-lines">DNS: ${dns}</div>
-        <div class="adapter-actions">
-          <button class="group-action" data-key="${key}">Add to group</button>
-          ${showRemove ? `<button class="group-remove ghost" data-key="${key}">Remove group</button>` : ''}
+      <div class="adapter-summary">
+        <div class="adapter-key">
+          <div class="key-label">IP Address</div>
+          <div class="key-value">${ipAddress}</div>
+        </div>
+        <div class="adapter-key">
+          <div class="key-label">Gateway</div>
+          <div class="key-value">${gateway}</div>
         </div>
       </div>
     </div>
   `;
+}
+
+function renderAdapterModal(resp) {
+  const modalEl = document.getElementById('adapterModal');
+  if (!modalEl) {
+    return;
+  }
+  if (!activeAdapterKey || !resp) {
+    modalEl.classList.remove('open');
+    modalEl.innerHTML = '';
+    return;
+  }
+  const adapter = (resp.adapters || []).find((item) => adapterKey(item) === activeAdapterKey);
+  if (!adapter) {
+    modalEl.classList.remove('open');
+    modalEl.innerHTML = '';
+    return;
+  }
+  const dnsServers = (adapter.dnsServers || []).filter(Boolean);
+  modalEl.classList.add('open');
+  modalEl.innerHTML = `
+    <div class="modal-overlay" data-close="true"></div>
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <div class="adapter-icon">
+            ${adapterTypeIcon(adapter.type)}
+          </div>
+          <div>
+            <div class="modal-name">${adapter.name}</div>
+            <div class="modal-subtitle">${adapter.description || adapter.name}</div>
+          </div>
+        </div>
+        <button class="modal-close" data-close="true">×</button>
+      </div>
+      <div class="modal-tags">
+        <span class="chip ${adapter.connected ? 'online' : 'offline'}">${adapter.connected ? 'Connected' : 'Disconnected'}</span>
+        <span class="chip muted">${capitalize(adapter.type)}</span>
+      </div>
+      <div class="modal-section">
+        <div class="section-title">Network Details</div>
+        <div class="detail-row">
+          <div class="detail-label">IP Address</div>
+          <div class="detail-value">
+            <span>${adapter.ipv4Address || '-'}</span>
+            <button class="copy-button" data-copy="${adapter.ipv4Address || ''}">Copy</button>
+          </div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Subnet Mask</div>
+          <div class="detail-value">
+            <span>${adapter.subnetMask || '-'}</span>
+            <button class="copy-button" data-copy="${adapter.subnetMask || ''}">Copy</button>
+          </div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Gateway</div>
+          <div class="detail-value">
+            <span>${adapter.defaultGateway || '-'}</span>
+            <button class="copy-button" data-copy="${adapter.defaultGateway || ''}">Copy</button>
+          </div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">MAC Address</div>
+          <div class="detail-value">
+            <span>${adapter.macAddress || '-'}</span>
+            <button class="copy-button" data-copy="${adapter.macAddress || ''}">Copy</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-section">
+        <div class="section-title">Configuration</div>
+        <div class="detail-row">
+          <div class="detail-label">DHCP</div>
+          <div class="detail-value"><span>${capitalize(adapter.dhcpEnabled)}</span></div>
+        </div>
+      </div>
+      <div class="modal-section">
+        <div class="section-title">DNS Servers</div>
+        ${dnsServers.length === 0 ? '<div class="detail-empty">No DNS servers listed.</div>' : dnsServers.map((server) => `
+          <div class="detail-row dns-row">
+            <div class="detail-label">${server}</div>
+            <div class="detail-value">
+              <button class="copy-button" data-copy="${server}">Copy</button>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+
+  modalEl.querySelectorAll('[data-close="true"]').forEach((button) => {
+    button.addEventListener('click', () => {
+      activeAdapterKey = null;
+      renderAdapterModal(lastNetworkResponse);
+    });
+  });
+
+  modalEl.querySelectorAll('.copy-button').forEach((button) => {
+    button.addEventListener('click', async (event) => {
+      event.stopPropagation();
+      const value = button.dataset.copy || '';
+      if (!value) {
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(value);
+        button.innerText = 'Copied';
+        setTimeout(() => {
+          button.innerText = 'Copy';
+        }, 1200);
+      } catch {
+        button.innerText = 'Failed';
+        setTimeout(() => {
+          button.innerText = 'Copy';
+        }, 1200);
+      }
+    });
+  });
+
 }
 
 document.getElementById('refresh').addEventListener('click', refreshStatus);
@@ -715,6 +895,12 @@ navButtons.forEach((button) => {
 document.querySelectorAll('.stat-link').forEach((button) => {
   button.addEventListener('click', () => {
     setActiveSection(button.dataset.target);
+  });
+});
+networkFilterButtons.forEach((button) => {
+  button.addEventListener('click', () => {
+    activeNetworkFilter = button.dataset.filter || 'all';
+    renderNetwork(lastNetworkResponse);
   });
 });
 
