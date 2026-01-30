@@ -105,49 +105,6 @@ func (a *App) GetNetwork() (*NetworkResponse, error) {
 	return doRequest[NetworkResponse](http.MethodGet, "/network", nil)
 }
 
-func (a *App) GetAdapterGroups() (map[string]string, error) {
-	path, err := groupsFilePath()
-	if err != nil {
-		return nil, err
-	}
-
-	data, err := os.ReadFile(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return map[string]string{}, nil
-		}
-		return nil, err
-	}
-
-	if len(bytes.TrimSpace(data)) == 0 {
-		return map[string]string{}, nil
-	}
-
-	var groups map[string]string
-	if err := json.Unmarshal(data, &groups); err != nil {
-		return nil, err
-	}
-	if groups == nil {
-		groups = map[string]string{}
-	}
-	return groups, nil
-}
-
-func (a *App) SaveAdapterGroups(groups map[string]string) error {
-	path, err := groupsFilePath()
-	if err != nil {
-		return err
-	}
-	if groups == nil {
-		groups = map[string]string{}
-	}
-	data, err := json.MarshalIndent(groups, "", "  ")
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(path, data, 0644)
-}
-
 func doRequest[T any](method string, path string, payload interface{}) (*T, error) {
 	token, err := loadControlToken()
 	if err != nil {
@@ -201,16 +158,4 @@ func loadControlToken() (string, error) {
 		return "", err
 	}
 	return string(bytes.TrimSpace(data)), nil
-}
-
-func groupsFilePath() (string, error) {
-	appData := os.Getenv("APPDATA")
-	if appData == "" {
-		return "", fmt.Errorf("APPDATA is not set")
-	}
-	configDir := filepath.Join(appData, "NetworkCloud")
-	if err := os.MkdirAll(configDir, 0755); err != nil {
-		return "", err
-	}
-	return filepath.Join(configDir, "adapter_groups.json"), nil
 }
