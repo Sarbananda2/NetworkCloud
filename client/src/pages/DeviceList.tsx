@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useDevices } from "@/hooks/use-devices";
+import { useDeviceWebSocket } from "@/hooks/use-websocket";
 import { Layout } from "@/components/Layout";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Card } from "@/components/ui/card";
@@ -13,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DeviceList() {
   const { data: devices, isLoading, error } = useDevices();
+  useDeviceWebSocket();
   const [search, setSearch] = useState("");
   const [, setLocation] = useLocation();
 
