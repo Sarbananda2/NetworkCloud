@@ -1,26 +1,20 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useDevices } from "@/hooks/use-devices";
-import { useDeviceWebSocket } from "@/hooks/use-websocket";
 import { Layout } from "@/components/Layout";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { motion } from "framer-motion";
-import { Laptop, Smartphone, Server, Search, WifiOff, Wifi, Monitor, Network, Cloud, Activity, Plus, Link2 } from "lucide-react";
+import { Laptop, Smartphone, Server, Search, WifiOff, Monitor, Plus, Link2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DeviceList() {
   const { data: devices, isLoading, error } = useDevices();
-  useDeviceWebSocket();
   const [search, setSearch] = useState("");
   const [, setLocation] = useLocation();
-
-  const totalDevices = devices?.length ?? 0;
-  const onlineDevices = devices?.filter((device) => device.status.toLowerCase() === "online").length ?? 0;
-  const offlineDevices = devices?.filter((device) => device.status.toLowerCase() === "offline").length ?? 0;
 
   const filteredDevices = devices?.filter(d => 
     d.name.toLowerCase().includes(search.toLowerCase()) || 
@@ -98,42 +92,6 @@ export default function DeviceList() {
               />
             </div>
           </div>
-        </div>
-
-        {/* Summary Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card className="p-4 bg-background/80 border-border/50">
-            <div className="flex items-center justify-between">
-              <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Network Adapters</div>
-              <Network className="w-4 h-4 text-primary" />
-            </div>
-            <div className="text-2xl font-semibold mt-2">{totalDevices}</div>
-            <div className="text-xs text-muted-foreground mt-1">{onlineDevices} connected</div>
-          </Card>
-          <Card className="p-4 bg-background/80 border-border/50">
-            <div className="flex items-center justify-between">
-              <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Cloud Status</div>
-              <Cloud className="w-4 h-4 text-primary" />
-            </div>
-            <div className="text-2xl font-semibold mt-2">Linked</div>
-            <div className="text-xs text-muted-foreground mt-1">Last synced just now</div>
-          </Card>
-          <Card className="p-4 bg-background/80 border-border/50">
-            <div className="flex items-center justify-between">
-              <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Online Devices</div>
-              <Wifi className="w-4 h-4 text-primary" />
-            </div>
-            <div className="text-2xl font-semibold mt-2">{onlineDevices}</div>
-            <div className="text-xs text-muted-foreground mt-1">{offlineDevices} offline</div>
-          </Card>
-          <Card className="p-4 bg-background/80 border-border/50">
-            <div className="flex items-center justify-between">
-              <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Agent Status</div>
-              <Activity className="w-4 h-4 text-primary" />
-            </div>
-            <div className="text-2xl font-semibold mt-2">Running</div>
-            <div className="text-xs text-muted-foreground mt-1">Uptime: 4h 32m</div>
-          </Card>
         </div>
 
         {/* Loading State */}

@@ -7,7 +7,6 @@ import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integra
 import { api, deviceFlowSchemas } from "@shared/routes";
 import { isAgentAuthenticated, type AgentRequest } from "./middleware/agentAuth";
 import { generateToken, hashToken } from "./utils/agentToken";
-import { notifyDeviceUpdate } from "./websocket";
 
 // Helper functions for device authorization flow
 function generateDeviceCode(): string {
@@ -422,7 +421,6 @@ export async function registerRoutes(
           if (ipAddress !== undefined || adapters !== undefined) {
             await storage.updateNetworkState(existing.id, ipAddress, false, adapters);
           }
-          notifyDeviceUpdate(userId);
           return res.status(200).json(updated);
         }
       }
@@ -439,7 +437,6 @@ export async function registerRoutes(
         await storage.updateNetworkState(device.id, ipAddress, false, adapters);
       }
       
-      notifyDeviceUpdate(userId);
       res.status(201).json(device);
     } catch (error) {
       console.error("Error registering device:", error);
@@ -477,7 +474,6 @@ export async function registerRoutes(
         await storage.updateNetworkState(deviceId, ipAddress, false, adapters);
       }
       
-      notifyDeviceUpdate(userId);
       res.json(updated);
     } catch (error) {
       console.error("Error updating device:", error);
@@ -501,7 +497,6 @@ export async function registerRoutes(
       
       // Agent-initiated delete doesn't revoke itself, just deletes the device
       await storage.deleteDevice(deviceId);
-      notifyDeviceUpdate(userId);
       res.json({ message: "Device deleted successfully" });
     } catch (error) {
       console.error("Error deleting device:", error);
@@ -551,10 +546,6 @@ export async function registerRoutes(
       for (const device of remainingDevices) {
         await storage.deleteDevice(device.id);
         deleted++;
-      }
-      
-      if (created > 0 || updated > 0 || deleted > 0) {
-        notifyDeviceUpdate(userId);
       }
       
       res.json({ created, updated, deleted });

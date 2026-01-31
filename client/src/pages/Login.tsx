@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { Mail, Lock, Shield, XCircle } from "lucide-react";
 import { SiGoogle } from "react-icons/si";
-const logoUrl = "/favicon.png";
+import logoUrl from "@/assets/logo.png";
 import { useLocation } from "wouter";
 
 export default function LoginPage() {
