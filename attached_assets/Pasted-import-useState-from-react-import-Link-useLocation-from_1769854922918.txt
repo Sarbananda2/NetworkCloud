@@ -8,7 +8,11 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { motion } from "framer-motion";
-import { Laptop, Smartphone, Server, Search, WifiOff, Wifi, Monitor, Network, Cloud, Activity, Plus, Link2 } from "lucide-react";
+<<<<<<< HEAD
+import { Laptop, Smartphone, Server, Search, WifiOff, Monitor, Plus, Link2 } from "lucide-react";
+=======
+import { Laptop, Smartphone, Server, Search, WifiOff, Wifi, Monitor, Network, Cloud, Activity } from "lucide-react";
+>>>>>>> c8c595d29605fe452b21ae776b9ee9482ebe92d1
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 

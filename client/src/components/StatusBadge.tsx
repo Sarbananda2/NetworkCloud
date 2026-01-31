@@ -23,6 +23,8 @@ export function StatusBadge({ status, className, "data-testid": testId }: Status
     dotColor = "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.4)]";
   }
 
+  const label = normalizedStatus.charAt(0).toUpperCase() + normalizedStatus.slice(1);
+
   return (
     <span 
       className={clsx(
@@ -33,7 +35,7 @@ export function StatusBadge({ status, className, "data-testid": testId }: Status
       data-testid={testId}
     >
       <span className={clsx("w-2 h-2 rounded-full", dotColor)} />
-      {status.charAt(0).toUpperCase() + status.slice(1)}
+      {label}
     </span>
   );
 }
